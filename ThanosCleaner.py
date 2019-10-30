@@ -361,7 +361,7 @@ class DCleanerGUI(QMainWindow):
 	
 	def showProgInfo(self):
 		infoBox = QMessageBox()
-		infoBox.information(self, "정보", "제작자 : 작은사과나무\n깃허브 : https://github.com/augustapple\n이메일 : augustapple77@gmail.com")
+		infoBox.information(self, "정보", "제작자 : 작은사과나무<br>깃허브 : <a href='https://github.com/augustapple'>https://github.com/augustapple</a><br>이메일 : augustapple77@gmail.com")
 	
 	def closeEvent(self, event):
 		close = QMessageBox.question(self, "프로그램 종료", "클리너를 종료하시겠습니까?", QMessageBox.Yes | QMessageBox.No)
