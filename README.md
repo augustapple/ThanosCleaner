@@ -6,7 +6,7 @@
 당신의 디시인사이드 게시글/댓글을 삭제해주는 디시인사이드 클리너입니다.
 
 ## ThanosCleaner의 사용법은?
-[여기](https://github.com/augustapple/ThanosCleaner/releases/tag/v1.0)를 클릭하여 미리 패키징된 파일을 다운로드 하거나
+[여기](https://github.com/augustapple/ThanosCleaner/releases)를 클릭하여 미리 패키징된 파일을 다운로드 하거나
 
 아래의 명령어로 직접 패키징하여 사용할 수 있습니다.
 
