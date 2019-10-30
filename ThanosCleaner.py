@@ -1,4 +1,4 @@
-﻿from PyQt5.QtCore import *
+from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 import os
@@ -13,10 +13,10 @@ from bs4 import BeautifulSoup
 
 loginFlag = False
 exitFlag = False
+deleteFlag = False
 
 decode_service_code='''
     function get_service_code(service_code, r_value){
-
     var a,e,n,t,f,d,h,i = "yL/M=zNa0bcPQdReSfTgUhViWjXkYIZmnpo+qArOBs1Ct2D3uE4Fv5G6wHl78xJ9K",
     o = "",
     c = 0;
@@ -51,6 +51,7 @@ class MyWidget(QWidget):
 		layout = QGridLayout()
 		self.lbl_id = QLabel("ID : ", self)
 		self.qle_id = QLineEdit(self)
+		self.qle_id.returnPressed.connect(self.tryLogin)
 		self.lbl_pw = QLabel("PW : ", self)
 		self.qle_pw = QLineEdit(self)
 		self.qle_pw.returnPressed.connect(self.tryLogin)
@@ -60,16 +61,20 @@ class MyWidget(QWidget):
 		self.btn_login = QPushButton("로그인", self)
 		self.btn_login.clicked.connect(self.tryLogin)
 		self.btn_login.setStatusTip("로그인하기")
+		self.btn_logout = QPushButton("로그아웃", self)
+		self.btn_logout.setEnabled(False)
+		self.btn_logout.clicked.connect(self.logout)
+		self.btn_logout.setStatusTip("로그아웃하기")
 		self.status = "로그인되지 않음"
 		self.lbl_status = QLabel("로그인 상태 : %s" % self.status, self)
 		self.lbl_post = QLabel("게시글 수 : 알 수 없음")
 		self.lbl_comment = QLabel("댓글 수 : 알 수 없음")
-		self.btn_delpost = QPushButton("게시글 삭제", self)
-		self.btn_delpost.clicked.connect(self.tryDelPost)
-		self.btn_delpost.setStatusTip("모든 게시글 삭제")
-		self.btn_delcomment = QPushButton("댓글 삭제", self)
-		self.btn_delcomment.clicked.connect(self.tryDelComment)
-		self.btn_delcomment.setStatusTip("모든 댓글 삭제")
+		self.btn_delPost = QPushButton("게시글 삭제", self)
+		self.btn_delPost.clicked.connect(self.tryDelPost)
+		self.btn_delPost.setStatusTip("모든 게시글 삭제")
+		self.btn_delComment = QPushButton("댓글 삭제", self)
+		self.btn_delComment.clicked.connect(self.tryDelComment)
+		self.btn_delComment.setStatusTip("모든 댓글 삭제")
 
 		self.setLayout(layout)
 
@@ -79,11 +84,12 @@ class MyWidget(QWidget):
 		layout.addWidget(self.qle_pw, 2, 2)
 		layout.addWidget(self.cbx_pw, 2, 3)
 		layout.addWidget(self.btn_login, 3, 2)
-		layout.addWidget(self.lbl_status, 4, 2, 1, 3)
-		layout.addWidget(self.lbl_post, 5, 2)
-		layout.addWidget(self.lbl_comment, 6, 2)
-		layout.addWidget(self.btn_delpost, 7, 2)
-		layout.addWidget(self.btn_delcomment, 8, 2)
+		layout.addWidget(self.btn_logout, 4, 2)
+		layout.addWidget(self.lbl_status, 5, 2, 1, 3)
+		layout.addWidget(self.lbl_post, 6, 2)
+		layout.addWidget(self.lbl_comment, 7, 2)
+		layout.addWidget(self.btn_delPost, 8, 2)
+		layout.addWidget(self.btn_delComment, 9, 2)
 	
 	def hidePassword(self, state):
 		if state == Qt.Checked:
@@ -93,6 +99,40 @@ class MyWidget(QWidget):
 			self.qle_pw.setEchoMode(QLineEdit.Normal)
 			self.cbx_pw.setStatusTip("비밀번호 숨기기")
 	
+	def logout(self):
+		global SESS, loginFlag, deleteFlag
+		if deleteFlag:
+			logoutCheck = QMessageBox.warning(self, "경고", "삭제가 진행중입니다. 로그아웃 하시겠습니까?", QMessageBox.Yes | QMessageBox.No)
+			if logoutCheck == QMessageBox.Yes:
+				loginFlag = False
+				SESS.close()
+				self.btn_login.setEnabled(True)
+				self.btn_login.setText("로그인")
+				self.btn_logout.setEnabled(False)
+				self.qle_id.setEnabled(True)
+				self.qle_id.setText("")
+				self.qle_pw.setEnabled(True)
+				self.qle_pw.setText("")
+				self.btn_delPost.setEnabled(True)
+				self.btn_delPost.setText("게시글 삭제")
+				self.btn_delComment.setEnabled(True)
+				self.btn_delComment.setText("댓글 삭제")
+		else:
+			loginFlag = False
+			SESS.close()
+			self.btn_login.setEnabled(True)
+			self.btn_login.setText("로그인")
+			self.btn_logout.setEnabled(False)
+			self.qle_id.setEnabled(True)
+			self.qle_id.setText("")
+			self.qle_pw.setEnabled(True)
+			self.qle_pw.setText("")
+			self.btn_delPost.setEnabled(True)
+			self.btn_delPost.setText("게시글 삭제")
+			self.btn_delComment.setEnabled(True)
+			self.btn_delComment.setText("댓글 삭제")
+		deleteFlag = False
+
 	def tryLogin(self):
 		self.userId = self.qle_id.text()
 		self.userPw = self.qle_pw.text()
@@ -100,12 +140,13 @@ class MyWidget(QWidget):
 		loginSess = self.login(self.userId, self.userPw)
 
 		if(self.userId == "" and self.userPw == "") or not loginSess:
-			self.loginFailed = QMessageBox.warning(self, "경고", "로그인 실패", QMessageBox.Yes)
+			QMessageBox.warning(self, "경고", "로그인 실패", QMessageBox.Yes)
 			pass
 		else:
 			global loginFlag
 			loginFlag = True
 			self.btn_login.setEnabled(False)
+			self.btn_logout.setEnabled(True)
 			self.btn_login.setText("로그인 완료")
 			self.qle_id.setEnabled(False)
 			self.qle_pw.setEnabled(False)
@@ -151,7 +192,7 @@ class MyWidget(QWidget):
 			return SESS
 	
 	def tryDelPost(self):
-		if(loginFlag):	
+		if(loginFlag):
 			req = SESS.get("https://gallog.dcinside.com/%s/posting" % self.userId)
 			soup = BeautifulSoup(req.text,"lxml")
 			service_code_origin = soup.find("input", {"name" : "service_code"})["value"]
@@ -170,51 +211,45 @@ class MyWidget(QWidget):
 
 			service_code = decode_service_code(service_code_origin, r_value)
 
-			self.btn_delcomment.setEnabled(False)
-			self.btn_delpost.setEnabled(False)
-			self.btn_delpost.setText("게시글 삭제 중..")
-			postDelThr = (threading.Thread(target=self.delPost, args=(SESS, self.userId, service_code)))
-			postDelThr.start()
+			self.btn_delComment.setEnabled(False)
+			self.btn_delPost.setEnabled(False)
+			self.btn_delPost.setText("게시글 삭제 중..")
+			self.postDelThr = (threading.Thread(target=self.delPost, args=(SESS, self.userId, service_code)))
+			self.postDelThr.start()
 		else:
-			self.loginFirst = QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
+			QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
 	
 	def delPost(self, SESS, userId, service_code):
-		global exitFlag
+		global exitFlag, loginFlag, deleteFlag
+		deleteFlag = True
 		while not exitFlag:
 			try:
+				if not loginFlag:
+					break
 				req = SESS.get("https://gallog.dcinside.com/%s/posting" % userId)
 				soup = BeautifulSoup(req.text,"lxml")
 				content_form = soup.select("ul.cont_listbox > li")
-				
+
 				if not content_form:
-					self.btn_delpost.setEnabled(True)
-					self.btn_delcomment.setEnabled(True)
-					self.btn_delpost.setText("게시글 삭제")
+					self.btn_delPost.setEnabled(True)
+					self.btn_delComment.setEnabled(True)
+					self.btn_delPost.setText("게시글 삭제")
 					print("삭제할 게시글 없음")
+					deleteFlag = False
 					break
 				else:
 					pass
-				
-				delete_set = []	
-				
-				for i in content_form:
-					data_no = (i.attrs["data-no"])
-					delete_set.append(data_no)
-					
-				for set in delete_set:
-					if exitFlag:
-						break
-					delete_data = {
-						"no" : set,
-						"service_code" : service_code
-					}
-					
-					time.sleep(0.5)
-					req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=delete_data, timeout=10)
-					result = req.text
-					print(result)
-				
-				delete_set.clear()
+
+				dataNo = content_form[0]["data-no"]
+				del content_form[0]
+				deleteData = {
+					"no" : dataNo,
+					"service_code" : service_code
+				}
+				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
+				result = req.text
+				print(result)
+				time.sleep(0.5)
 			except Exception as e:
 				print(e)
 				pass
@@ -239,66 +274,63 @@ class MyWidget(QWidget):
 
 			service_code = decode_service_code(service_code_origin, r_value)
 
-			self.btn_delcomment.setEnabled(False)
-			self.btn_delpost.setEnabled(False)
-			self.btn_delcomment.setText("댓글 삭제 중..")
-			commentDelThr = (threading.Thread(target=self.delComment, args=(SESS, self.userId, service_code)))
-			commentDelThr.start()
+			self.btn_delComment.setEnabled(False)
+			self.btn_delPost.setEnabled(False)
+			self.btn_delComment.setText("댓글 삭제 중..")
+			self.commentDelThr = (threading.Thread(target=self.delComment, args=(SESS, self.userId, service_code)))
+			self.commentDelThr.start()
 		else:
-			self.loginFirst = QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
+			QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
 	
 	def delComment(self, SESS, userId, service_code):
-		global exitFlag
+		global exitFlag, loginFlag, deleteFlag
+		deleteFlag = True
 		while not exitFlag:
 			try:
+				if not loginFlag:
+					break
 				req = SESS.get("https://gallog.dcinside.com/%s/comment" % userId)
 				soup = BeautifulSoup(req.text,"lxml")
 				content_form = soup.select("ul.cont_listbox > li")
 
 				if not content_form:
-					self.btn_delpost.setEnabled(True)
-					self.btn_delcomment.setEnabled(True)
-					self.btn_delcomment.setText("댓글 삭제")
+					self.btn_delPost.setEnabled(True)
+					self.btn_delComment.setEnabled(True)
+					self.btn_delComment.setText("댓글 삭제")
 					print("삭제할 댓글 없음")
+					deleteFlag = False
 					break
 				else:
 					pass
 
-				delete_set = []
-
-				for i in content_form:
-					data_no = (i.attrs["data-no"])
-					delete_set.append(data_no)
-
-				for set in delete_set:
-					if exitFlag:
-						break
-					delete_data = {
-						"no" : set,
-						"service_code" : service_code
-					}
-
-					time.sleep(0.5)
-					req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=delete_data, timeout=10)
-					result = req.text
-					print(result)
-				delete_set.clear()
-
+				dataNo = content_form[0]["data-no"]
+				del content_form[0]
+				deleteData = {
+					"no" : dataNo,
+					"service_code" : service_code
+				}
+				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
+				result = req.text
+				print(result)
+				time.sleep(0.5)
 			except Exception as e:
 				print(e)
 				pass
 	
 	def gangsin(self, SESS, userId):
-		req = SESS.get("https://gallog.dcinside.com/%s" % userId)
-		soup = BeautifulSoup(req.text,"lxml")
-		self.lbl_status.setText("로그인 상태 : %s" % soup.find("div", class_="galler_info").text.split("(")[0].replace("\n", ""))
-		global exitFlag
-		while not exitFlag:
+		global exitFlag, loginFlag
+		while exitFlag == False and loginFlag == True:
+			req = SESS.get("https://gallog.dcinside.com/%s" % userId)
+			soup = BeautifulSoup(req.text,"lxml")
+			self.lbl_status.setText("로그인 상태 : %s" % soup.find("div", class_="galler_info").text.split("(")[0].replace("\n", ""))
 			req = SESS.get("https://gallog.dcinside.com/%s" % userId)
 			soup = BeautifulSoup(req.text,"lxml")
 			self.lbl_post.setText("게시글 수 : %s" % soup.find_all("h2", class_="tit")[0].find("span", class_="num").text.replace("(", "").replace(")", ""))
 			self.lbl_comment.setText("댓글 수 : %s" % soup.find_all("h2", class_="tit")[1].find("span", class_="num").text.replace("(", "").replace(")", ""))
-			time.sleep(1)
+			if not (exitFlag or loginFlag):
+				self.lbl_status.setText("로그인 상태 : 로그인되지 않음")
+				self.lbl_post.setText("게시글 수 : 알 수 없음")
+				self.lbl_comment.setText("댓글 수 : 알 수 없음")
 
 class DCleanerGUI(QMainWindow):
 	def __init__(self):
@@ -324,7 +356,7 @@ class DCleanerGUI(QMainWindow):
 
 		self.setWindowTitle("ThanosCleaner")
 		self.setWindowIcon(QIcon("./dependencies/image/Thanos.ico"))
-		self.setFixedSize(300, 250)
+		self.setFixedSize(300, 270)
 		self.show()
 	
 	def showProgInfo(self):
