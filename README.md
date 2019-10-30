@@ -1,4 +1,4 @@
-# ThanosCleaner
+# ThanosCleaner (디시클리너)
 
 ## ThanosCleaner란?
 한 번의 핑거 스냅으로 우주의 절반을 소멸시킨 타노스를 본받아 한 번의 클릭으로
