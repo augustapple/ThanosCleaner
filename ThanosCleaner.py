@@ -49,6 +49,7 @@ class MyWidget(QWidget):
 		super().__init__()
 
 		layout = QGridLayout()
+		
 		self.lbl_id = QLabel("ID : ", self)
 		self.qle_id = QLineEdit(self)
 		self.qle_id.returnPressed.connect(self.tryLogin)
@@ -356,7 +357,9 @@ class DCleanerGUI(QMainWindow):
 
 		self.setWindowTitle("ThanosCleaner")
 		self.setWindowIcon(QIcon("./dependencies/image/Thanos.ico"))
-		self.setFixedSize(300, 270)
+		scaling = self.logicalDpiX() / 96.0
+		print(scaling)
+		self.setFixedSize(300 * scaling, 270 * scaling)
 		self.show()
 	
 	def showProgInfo(self):
