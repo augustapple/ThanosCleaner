@@ -138,21 +138,22 @@ class MyWidget(QWidget):
 		self.userId = self.qle_id.text()
 		self.userPw = self.qle_pw.text()
 
-		loginSess = self.login(self.userId, self.userPw)
-
-		if(self.userId == "" and self.userPw == "") or not loginSess:
-			QMessageBox.warning(self, "경고", "로그인 실패", QMessageBox.Yes)
-			pass
+		if(self.userId == "" or self.userPw == ""):
+			QMessageBox.warning(self, "경고", "아이디, 비밀번호를 입력해주세요", QMessageBox.Yes)
 		else:
-			global loginFlag
-			loginFlag = True
-			self.btn_login.setEnabled(False)
-			self.btn_logout.setEnabled(True)
-			self.btn_login.setText("로그인 완료")
-			self.qle_id.setEnabled(False)
-			self.qle_pw.setEnabled(False)
-			gangsinThr = (threading.Thread(target=self.gangsin, args=(SESS, self.userId)))
-			gangsinThr.start()
+			loginSess = self.login(self.userId, self.userPw)
+			if not loginSess:
+				QMessageBox.warning(self, "경고", "로그인에 실패했습니다", QMessageBox.Yes)
+			else:
+				global loginFlag
+				loginFlag = True
+				self.btn_login.setEnabled(False)
+				self.btn_logout.setEnabled(True)
+				self.btn_login.setText("로그인 완료")
+				self.qle_id.setEnabled(False)
+				self.qle_pw.setEnabled(False)
+				gangsinThr = (threading.Thread(target=self.gangsin, args=(SESS, self.userId)))
+				gangsinThr.start()
 	
 	def login(self, userId, userPw):
 		session = requests.session()
@@ -235,7 +236,6 @@ class MyWidget(QWidget):
 					self.btn_delPost.setEnabled(True)
 					self.btn_delComment.setEnabled(True)
 					self.btn_delPost.setText("게시글 삭제")
-					print("삭제할 게시글 없음")
 					deleteFlag = False
 					break
 				else:
@@ -248,8 +248,7 @@ class MyWidget(QWidget):
 					"service_code" : service_code
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
-				result = req.text
-				print(result)
+				print(req.text)
 				time.sleep(0.5)
 			except Exception as e:
 				print(e)
@@ -298,7 +297,6 @@ class MyWidget(QWidget):
 					self.btn_delPost.setEnabled(True)
 					self.btn_delComment.setEnabled(True)
 					self.btn_delComment.setText("댓글 삭제")
-					print("삭제할 댓글 없음")
 					deleteFlag = False
 					break
 				else:
@@ -311,8 +309,7 @@ class MyWidget(QWidget):
 					"service_code" : service_code
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
-				result = req.text
-				print(result)
+				print(req.text)
 				time.sleep(0.5)
 			except Exception as e:
 				print(e)
@@ -358,8 +355,8 @@ class DCleanerGUI(QMainWindow):
 		self.setWindowTitle("ThanosCleaner")
 		self.setWindowIcon(QIcon("./dependencies/image/Thanos.ico"))
 		scaling = self.logicalDpiX() / 96.0
-		print(scaling)
 		self.setFixedSize(300 * scaling, 270 * scaling)
+		self.setStyleSheet("font-size: %dpt;" % (9 * scaling))
 		self.show()
 	
 	def showProgInfo(self):
