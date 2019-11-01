@@ -29,6 +29,8 @@ pyinstaller -F -w --icon="dependencies/image/Thanos.ico" ThanosCleaner.py
 ## Special Thanks
 베타버전을 테스트해준 ㄴㅁㅈㄱ, 대리영정, 플링츄, 배교자, LGPL 님
 
+이슈를 제보해주신 [craftingmod](https://github.com/craftingmod) 님
+
 ThanosCleaner를 직접 검수해주신 [티바이트](https://github.com/tibyte) 님
 
 ThanosCleaner의 구조를 짜는데 도와주신 [쪼리핑](https://github.com/JJoriping) 님
