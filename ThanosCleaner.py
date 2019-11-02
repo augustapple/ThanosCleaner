@@ -337,7 +337,7 @@ class MyWidget(QWidget):
 			self.btn_delComment.setEnabled(False)
 			self.btn_delPost.setEnabled(False)
 			self.btn_delGuestbook.setEnabled(False)
-			self.btn_delComment.setText("방명록 삭제 중..")
+			self.btn_delGuestbook.setText("방명록 삭제 중..")
 			self.commentDelThr = (threading.Thread(target=self.delGuestbook, args=(SESS, self.userId)))
 			self.commentDelThr.start()
 		else:
@@ -357,7 +357,7 @@ class MyWidget(QWidget):
 				if not content_form:
 					self.btn_delGuestbook.setEnabled(True)
 					self.btn_delPost.setEnabled(True)
-					self.btn_delGuestbook.setEnabled(True)
+					self.btn_delComment.setEnabled(True)
 					self.btn_delGuestbook.setText("방명록 삭제")
 					deleteFlag = False
 					break
@@ -417,8 +417,8 @@ class DCleanerGUI(QMainWindow):
 
 		self.setWindowTitle("ThanosCleaner")
 		self.setWindowIcon(QIcon("./dependencies/image/Thanos.ico"))
-		scaling = self.logicalDpiX() / 82.54
-		self.setFixedSize(300 * scaling, 270 * scaling)
+		scaling = self.logicalDpiX() / 96.0
+		self.setFixedSize(300 * scaling, 300 * scaling)
 		self.setStyleSheet("font-size: %dpt;" % (9 * scaling))
 		self.show()
 	
