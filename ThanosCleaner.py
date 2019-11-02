@@ -70,12 +70,16 @@ class MyWidget(QWidget):
 		self.lbl_status = QLabel("로그인 상태 : %s" % self.status, self)
 		self.lbl_post = QLabel("게시글 수 : 알 수 없음")
 		self.lbl_comment = QLabel("댓글 수 : 알 수 없음")
+		self.lbl_guestbook = QLabel("방명록 수 : 알 수 없음")
 		self.btn_delPost = QPushButton("게시글 삭제", self)
 		self.btn_delPost.clicked.connect(self.tryDelPost)
 		self.btn_delPost.setStatusTip("모든 게시글 삭제")
 		self.btn_delComment = QPushButton("댓글 삭제", self)
 		self.btn_delComment.clicked.connect(self.tryDelComment)
 		self.btn_delComment.setStatusTip("모든 댓글 삭제")
+		self.btn_delGuestbook = QPushButton("방명록 삭제", self)
+		self.btn_delGuestbook.clicked.connect(self.tryDelGuestbook)
+		self.btn_delGuestbook.setStatusTip("모든 방명록 삭제")
 
 		self.setLayout(layout)
 
@@ -89,8 +93,10 @@ class MyWidget(QWidget):
 		layout.addWidget(self.lbl_status, 5, 2, 1, 3)
 		layout.addWidget(self.lbl_post, 6, 2)
 		layout.addWidget(self.lbl_comment, 7, 2)
-		layout.addWidget(self.btn_delPost, 8, 2)
-		layout.addWidget(self.btn_delComment, 9, 2)
+		layout.addWidget(self.lbl_guestbook, 8, 2)
+		layout.addWidget(self.btn_delPost, 9, 2)
+		layout.addWidget(self.btn_delComment, 10, 2)
+		layout.addWidget(self.btn_delGuestbook, 11, 2)
 	
 	def hidePassword(self, state):
 		if state == Qt.Checked:
@@ -118,6 +124,8 @@ class MyWidget(QWidget):
 				self.btn_delPost.setText("게시글 삭제")
 				self.btn_delComment.setEnabled(True)
 				self.btn_delComment.setText("댓글 삭제")
+				self.btn_delGuestbook.setEnabled(True)
+				self.btn_delGuestbook.setText("방명록 삭제")
 		else:
 			loginFlag = False
 			SESS.close()
@@ -132,6 +140,8 @@ class MyWidget(QWidget):
 			self.btn_delPost.setText("게시글 삭제")
 			self.btn_delComment.setEnabled(True)
 			self.btn_delComment.setText("댓글 삭제")
+			self.btn_delGuestbook.setEnabled(True)
+			self.btn_delGuestbook.setText("방명록 삭제")
 		deleteFlag = False
 
 	def tryLogin(self):
@@ -213,8 +223,9 @@ class MyWidget(QWidget):
 
 			service_code = decode_service_code(service_code_origin, r_value)
 
-			self.btn_delComment.setEnabled(False)
 			self.btn_delPost.setEnabled(False)
+			self.btn_delComment.setEnabled(False)
+			self.btn_delGuestbook.setEnabled(False)
 			self.btn_delPost.setText("게시글 삭제 중..")
 			self.postDelThr = (threading.Thread(target=self.delPost, args=(SESS, self.userId, service_code)))
 			self.postDelThr.start()
@@ -235,6 +246,7 @@ class MyWidget(QWidget):
 				if not content_form:
 					self.btn_delPost.setEnabled(True)
 					self.btn_delComment.setEnabled(True)
+					self.btn_delGuestbook.setEnabled(True)
 					self.btn_delPost.setText("게시글 삭제")
 					deleteFlag = False
 					break
@@ -274,8 +286,9 @@ class MyWidget(QWidget):
 
 			service_code = decode_service_code(service_code_origin, r_value)
 
-			self.btn_delComment.setEnabled(False)
 			self.btn_delPost.setEnabled(False)
+			self.btn_delComment.setEnabled(False)
+			self.btn_delGuestbook.setEnabled(False)
 			self.btn_delComment.setText("댓글 삭제 중..")
 			self.commentDelThr = (threading.Thread(target=self.delComment, args=(SESS, self.userId, service_code)))
 			self.commentDelThr.start()
@@ -296,6 +309,7 @@ class MyWidget(QWidget):
 				if not content_form:
 					self.btn_delPost.setEnabled(True)
 					self.btn_delComment.setEnabled(True)
+					self.btn_delGuestbook.setEnabled(True)
 					self.btn_delComment.setText("댓글 삭제")
 					deleteFlag = False
 					break
@@ -314,6 +328,53 @@ class MyWidget(QWidget):
 			except Exception as e:
 				print(e)
 				pass
+
+	def tryDelGuestbook(self):
+		if(loginFlag):
+			req = SESS.get("https://gallog.dcinside.com/%s/guestbook" % self.userId)
+			soup = BeautifulSoup(req.text,"lxml")
+
+			self.btn_delPost.setEnabled(False)
+			self.btn_delComment.setEnabled(False)
+			self.btn_delGuestbook.setEnabled(False)
+			self.btn_delGuestbook.setText("방명록 삭제 중..")
+			self.commentDelThr = (threading.Thread(target=self.delGuestbook, args=(SESS, self.userId)))
+			self.commentDelThr.start()
+		else:
+			QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
+	
+	def delGuestbook(self, SESS, userId):
+		global exitFlag, loginFlag, deleteFlag
+		deleteFlag = True
+		while not exitFlag:
+			try:
+				if not loginFlag:
+					break
+				req = SESS.get("https://gallog.dcinside.com/%s/guestbook" % userId)
+				soup = BeautifulSoup(req.text,"lxml")
+				content_form = soup.select("ul.cont_listbox > li")
+
+				if not content_form:
+					self.btn_delPost.setEnabled(True)
+					self.btn_delComment.setEnabled(True)
+					self.btn_delGuestbook.setEnabled(True)
+					self.btn_delGuestbook.setText("방명록 삭제")
+					deleteFlag = False
+					break
+				else:
+					pass
+
+				dataNo = content_form[0]["data-headnum"]
+				del content_form[0]
+				deleteData = {
+					"headnum" : dataNo
+				}
+				req = SESS.post("https://gallog.dcinside.com/%s/ajax/guestbook_ajax/delete" % userId, data=deleteData, timeout=10)
+				print(req.text)
+				time.sleep(0.5)
+			except Exception as e:
+				print(e)
+				pass
 	
 	def gangsin(self, SESS, userId):
 		global exitFlag, loginFlag
@@ -325,10 +386,12 @@ class MyWidget(QWidget):
 			soup = BeautifulSoup(req.text,"lxml")
 			self.lbl_post.setText("게시글 수 : %s" % soup.find_all("h2", class_="tit")[0].find("span", class_="num").text.replace("(", "").replace(")", ""))
 			self.lbl_comment.setText("댓글 수 : %s" % soup.find_all("h2", class_="tit")[1].find("span", class_="num").text.replace("(", "").replace(")", ""))
+			self.lbl_guestbook.setText("방명록 수 : %s" % soup.find_all("h2", class_="tit")[3].find("span", class_="num").text.replace("(", "").replace(")", ""))
 			if not (exitFlag or loginFlag):
 				self.lbl_status.setText("로그인 상태 : 로그인되지 않음")
 				self.lbl_post.setText("게시글 수 : 알 수 없음")
 				self.lbl_comment.setText("댓글 수 : 알 수 없음")
+				self.lbl_guestbook.setText("방명록 수 : 알 수 없음")
 
 class DCleanerGUI(QMainWindow):
 	def __init__(self):
@@ -355,7 +418,7 @@ class DCleanerGUI(QMainWindow):
 		self.setWindowTitle("ThanosCleaner")
 		self.setWindowIcon(QIcon("./dependencies/image/Thanos.ico"))
 		scaling = self.logicalDpiX() / 96.0
-		self.setFixedSize(300 * scaling, 270 * scaling)
+		self.setFixedSize(300 * scaling, 300 * scaling)
 		self.setStyleSheet("font-size: %dpt;" % (9 * scaling))
 		self.show()
 	
