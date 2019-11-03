@@ -98,6 +98,10 @@ class MyWidget(QWidget):
 		self.btn_delGuestbook = QPushButton("방명록 삭제", self)
 		self.btn_delGuestbook.clicked.connect(self.tryDelGuestbook)
 		self.btn_delGuestbook.setStatusTip("모든 방명록 삭제")
+		self.btn_cancelDelProcess = QPushButton("삭제 중단", self)
+		self.btn_cancelDelProcess.setEnabled(False)
+		self.btn_cancelDelProcess.clicked.connect(self.cancelDelProcess)
+		self.btn_cancelDelProcess.setStatusTip("진행 중인 삭제 작업 중단")
 
 		self.setLayout(layout)
 
@@ -117,6 +121,7 @@ class MyWidget(QWidget):
 		layout.addWidget(self.btn_delComment, 11, 2)
 		layout.addWidget(self.btn_delScrap, 12, 2)
 		layout.addWidget(self.btn_delGuestbook, 13, 2)
+		layout.addWidget(self.btn_cancelDelProcess, 14, 2)
 	
 	def hidePassword(self, state):
 		if state == Qt.Checked:
@@ -127,7 +132,7 @@ class MyWidget(QWidget):
 			logger.debug("Hide password is disabled")
 			self.qle_pw.setEchoMode(QLineEdit.Normal)
 			self.cbx_pw.setStatusTip("비밀번호 숨기기")
-	
+
 	def logout(self):
 		global SESS, loginFlag, deleteFlag
 		if deleteFlag:
@@ -144,14 +149,7 @@ class MyWidget(QWidget):
 				self.qle_id.setText("")
 				self.qle_pw.setEnabled(True)
 				self.qle_pw.setText("")
-				self.btn_delPost.setEnabled(True)
-				self.btn_delPost.setText("게시글 삭제")
-				self.btn_delComment.setEnabled(True)
-				self.btn_delComment.setText("댓글 삭제")
-				self.btn_delScrap.setEnabled(True)
-				self.btn_delScrap.setText("스크랩 삭제")
-				self.btn_delGuestbook.setEnabled(True)
-				self.btn_delGuestbook.setText("방명록 삭제")
+				self.buttonEnable()
 		else:
 			logger.info("Logged out")
 			loginFlag = False
@@ -163,14 +161,7 @@ class MyWidget(QWidget):
 			self.qle_id.setText("")
 			self.qle_pw.setEnabled(True)
 			self.qle_pw.setText("")
-			self.btn_delPost.setEnabled(True)
-			self.btn_delPost.setText("게시글 삭제")
-			self.btn_delComment.setEnabled(True)
-			self.btn_delComment.setText("댓글 삭제")
-			self.btn_delScrap.setEnabled(True)
-			self.btn_delScrap.setText("스크랩 삭제")
-			self.btn_delGuestbook.setEnabled(True)
-			self.btn_delGuestbook.setText("방명록 삭제")
+			self.buttonEnable()
 			deleteFlag = False
 
 	def tryLogin(self):
@@ -239,29 +230,10 @@ class MyWidget(QWidget):
 	def tryDelPost(self):
 		try:
 			if(loginFlag):
-				logger.debug("Initializing post delete process..")
-				req = SESS.get("https://gallog.dcinside.com/%s/posting" % self.userId)
-				soup = BeautifulSoup(req.text,"lxml")
-				service_code_origin = soup.find("input", {"name" : "service_code"})["value"]
-				data  = soup.select("script")[29]
-			
-				cut_1 = "var _r = _d"
-				cut_2 = '<script type="text/javascript">'
-				cut_3 = "</script>"
-			
-				cut_data = str(data).replace(cut_1,"")
-				cut_data = str(cut_data).replace(cut_2,"")
-				cut_data = str(cut_data).replace(cut_3,"")
-				_r = re.sub("\n","",str(cut_data))
-				r_value = re.sub("['();]","",str(_r))
-				r_value = str(r_value)
+				logger.info("Initializing post delete process..")
+				self.get_service_code(self.userId, 'posting')
 
-				service_code = decode_service_code(service_code_origin, r_value)
-
-				self.btn_delPost.setEnabled(False)
-				self.btn_delComment.setEnabled(False)
-				self.btn_delScrap.setEnabled(False)
-				self.btn_delGuestbook.setEnabled(False)
+				self.buttonDisable()
 				self.btn_delPost.setText("게시글 삭제 중..")
 				self.postDelThr = (threading.Thread(target=self.delPost, args=(SESS, self.userId, service_code)))
 				self.postDelThr.start()
@@ -275,7 +247,7 @@ class MyWidget(QWidget):
 	def delPost(self, SESS, userId, service_code):
 		global exitFlag, loginFlag, deleteFlag
 		deleteFlag = True
-		while not exitFlag:
+		while exitFlag == False and deleteFlag == True:
 			try:
 				if not loginFlag:
 					break
@@ -285,10 +257,7 @@ class MyWidget(QWidget):
 
 				if not content_form:
 					logger.info("All posts are deleted successfully!")
-					self.btn_delPost.setEnabled(True)
-					self.btn_delComment.setEnabled(True)
-					self.btn_delScrap.setEnabled(True)
-					self.btn_delGuestbook.setEnabled(True)
+					self.buttonEnable()
 					self.btn_delPost.setText("게시글 삭제")
 					deleteFlag = False
 					break
@@ -306,10 +275,7 @@ class MyWidget(QWidget):
 				time.sleep(0.5)
 			except Exception as e:
 				logger.critical(e)
-				self.btn_delPost.setEnabled(True)
-				self.btn_delComment.setEnabled(True)
-				self.btn_delScrap.setEnabled(True)
-				self.btn_delGuestbook.setEnabled(True)
+				self.buttonEnable()
 				self.btn_delPost.setText("게시글 삭제")
 				deleteFlag = False
 				break
@@ -317,29 +283,10 @@ class MyWidget(QWidget):
 	def tryDelComment(self):
 		try:
 			if(loginFlag):
-				logger.debug("Initializing comment delete process..")
-				req = SESS.get("https://gallog.dcinside.com/%s/comment" % self.userId)
-				soup = BeautifulSoup(req.text,"lxml")
-				service_code_origin = soup.find("input", {"name" : "service_code"})["value"]
-				data  = soup.select("script")[29]
+				logger.info("Initializing comment delete process..")
+				self.get_service_code(self.userId, 'comment')
 
-				cut_1 = "var _r = _d"
-				cut_2 = '<script type="text/javascript">'
-				cut_3 = "</script>"
-
-				cut_data = str(data).replace(cut_1,"")
-				cut_data = str(cut_data).replace(cut_2,"")
-				cut_data = str(cut_data).replace(cut_3,"")
-				_r = re.sub("\n","",str(cut_data))
-				r_value = re.sub("['();]","",str(_r))
-				r_value = str(r_value)
-
-				service_code = decode_service_code(service_code_origin, r_value)
-
-				self.btn_delPost.setEnabled(False)
-				self.btn_delComment.setEnabled(False)
-				self.btn_delScrap.setEnabled(False)
-				self.btn_delGuestbook.setEnabled(False)
+				self.buttonDisable()
 				self.btn_delComment.setText("댓글 삭제 중..")
 				self.commentDelThr = (threading.Thread(target=self.delComment, args=(SESS, self.userId, service_code)))
 				self.commentDelThr.start()
@@ -347,13 +294,13 @@ class MyWidget(QWidget):
 				logger.warning("Not logged in")
 				QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
 		except Exception as e:
-				logger.critical(e)
-				pass
+			logger.critical(e)
+			pass
 
 	def delComment(self, SESS, userId, service_code):
 		global exitFlag, loginFlag, deleteFlag
 		deleteFlag = True
-		while not exitFlag:
+		while exitFlag == False and deleteFlag == True:
 			try:
 				if not loginFlag:
 					break
@@ -363,10 +310,7 @@ class MyWidget(QWidget):
 
 				if not content_form:
 					logger.info("All comments are deleted successfully!")
-					self.btn_delPost.setEnabled(True)
-					self.btn_delComment.setEnabled(True)
-					self.btn_delScrap.setEnabled(True)
-					self.btn_delGuestbook.setEnabled(True)
+					self.buttonEnable()
 					self.btn_delComment.setText("댓글 삭제")
 					deleteFlag = False
 					break
@@ -384,10 +328,7 @@ class MyWidget(QWidget):
 				time.sleep(0.5)
 			except Exception as e:
 				logger.critical(e)
-				self.btn_delPost.setEnabled(True)
-				self.btn_delComment.setEnabled(True)
-				self.btn_delScrap.setEnabled(True)
-				self.btn_delGuestbook.setEnabled(True)
+				self.buttonEnable()
 				self.btn_delComment.setText("댓글 삭제")
 				deleteFlag = False
 				break
@@ -395,29 +336,10 @@ class MyWidget(QWidget):
 	def tryDelScrap(self):
 		try:
 			if(loginFlag):
-				logger.debug("Initializing scrap delete process..")
-				req = SESS.get("https://gallog.dcinside.com/%s/scrap" % self.userId)
-				soup = BeautifulSoup(req.text,"lxml")
-				service_code_origin = soup.find("input", {"name" : "service_code"})["value"]
-				data  = soup.select("script")[29]
+				logger.info("Initializing scrap delete process..")
+				self.get_service_code(self.userId, 'scrap')
 
-				cut_1 = "var _r = _d"
-				cut_2 = '<script type="text/javascript">'
-				cut_3 = "</script>"
-
-				cut_data = str(data).replace(cut_1,"")
-				cut_data = str(cut_data).replace(cut_2,"")
-				cut_data = str(cut_data).replace(cut_3,"")
-				_r = re.sub("\n","",str(cut_data))
-				r_value = re.sub("['();]","",str(_r))
-				r_value = str(r_value)
-
-				service_code = decode_service_code(service_code_origin, r_value)
-
-				self.btn_delPost.setEnabled(False)
-				self.btn_delComment.setEnabled(False)
-				self.btn_delScrap.setEnabled(False)
-				self.btn_delGuestbook.setEnabled(False)
+				self.buttonDisable()
 				self.btn_delScrap.setText("스크랩 삭제 중..")
 				self.scrapDelThr = (threading.Thread(target=self.delScrap, args=(SESS, self.userId, service_code)))
 				self.scrapDelThr.start()
@@ -425,13 +347,13 @@ class MyWidget(QWidget):
 				logger.warning("Not logged in")
 				QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
 		except Exception as e:
-				logger.critical(e)
-				pass
+			logger.critical(e)
+			pass
 
 	def delScrap(self, SESS, userId, service_code):
 		global exitFlag, loginFlag, deleteFlag
 		deleteFlag = True
-		while not exitFlag:
+		while exitFlag == False and deleteFlag == True:
 			try:
 				if not loginFlag:
 					break
@@ -441,10 +363,7 @@ class MyWidget(QWidget):
 
 				if not content_form:
 					logger.info("All scraps are deleted successfully!")
-					self.btn_delPost.setEnabled(True)
-					self.btn_delComment.setEnabled(True)
-					self.btn_delScrap.setEnabled(True)
-					self.btn_delGuestbook.setEnabled(True)
+					self.buttonEnable()
 					self.btn_delScrap.setText("스크랩 삭제")
 					deleteFlag = False
 					break
@@ -462,10 +381,7 @@ class MyWidget(QWidget):
 				time.sleep(0.5)
 			except Exception as e:
 				logger.critical(e)
-				self.btn_delPost.setEnabled(True)
-				self.btn_delComment.setEnabled(True)
-				self.btn_delScrap.setEnabled(True)
-				self.btn_delGuestbook.setEnabled(True)
+				self.buttonEnable()
 				self.btn_delScrap.setText("스크랩 삭제")
 				deleteFlag = False
 				break
@@ -473,14 +389,11 @@ class MyWidget(QWidget):
 	def tryDelGuestbook(self):
 		try:
 			if(loginFlag):
-				logger.debug("Initializing guestbook delete process..")
+				logger.info("Initializing guestbook delete process..")
 				req = SESS.get("https://gallog.dcinside.com/%s/guestbook" % self.userId)
 				soup = BeautifulSoup(req.text,"lxml")
 
-				self.btn_delPost.setEnabled(False)
-				self.btn_delComment.setEnabled(False)
-				self.btn_delScrap.setEnabled(False)
-				self.btn_delGuestbook.setEnabled(False)
+				self.buttonDisable()
 				self.btn_delGuestbook.setText("방명록 삭제 중..")
 				self.guestbookDelThr = (threading.Thread(target=self.delGuestbook, args=(SESS, self.userId)))
 				self.guestbookDelThr.start()
@@ -488,13 +401,13 @@ class MyWidget(QWidget):
 				logger.warning("Not logged in")
 				QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
 		except Exception as e:
-				logger.critical(e)
-				pass
+			logger.critical(e)
+			pass
 
 	def delGuestbook(self, SESS, userId):
 		global exitFlag, loginFlag, deleteFlag
 		deleteFlag = True
-		while not exitFlag:
+		while exitFlag == False and deleteFlag == True:
 			try:
 				if not loginFlag:
 					break
@@ -504,10 +417,7 @@ class MyWidget(QWidget):
 
 				if not content_form:
 					logger.info("All guestbooks are deleted successfully!")
-					self.btn_delPost.setEnabled(True)
-					self.btn_delComment.setEnabled(True)
-					self.btn_delScrap.setEnabled(True)
-					self.btn_delGuestbook.setEnabled(True)
+					self.buttonEnable()
 					self.btn_delGuestbook.setText("방명록 삭제")
 					deleteFlag = False
 					break
@@ -524,16 +434,13 @@ class MyWidget(QWidget):
 				time.sleep(0.5)
 			except Exception as e:
 				logger.critical(e)
-				self.btn_delPost.setEnabled(True)
-				self.btn_delComment.setEnabled(True)
-				self.btn_delScrap.setEnabled(True)
-				self.btn_delGuestbook.setEnabled(True)
+				self.buttonEnable()
 				self.btn_delGuestbook.setText("방명록 삭제")
 				deleteFlag = False
 				break
 
 	def gangsin(self, SESS, userId):
-		logger.debug("Refreshing Post/Comment/Scrap/Guestbook length..")
+		logger.debug("Refreshing gallog activities..")
 		global exitFlag, loginFlag
 		while exitFlag == False and loginFlag == True:
 			try:
@@ -556,6 +463,59 @@ class MyWidget(QWidget):
 			except Exception as e:
 				logger.critical(e)
 				pass
+
+	def get_service_code(self, userId, purpose):
+		req = SESS.get("https://gallog.dcinside.com/%s/%s" % (userId, purpose))
+		soup = BeautifulSoup(req.text,"lxml")
+		service_code_origin = soup.find("input", {"name" : "service_code"})["value"]
+		data  = soup.select("script")[29]
+
+		cut_1 = "var _r = _d"
+		cut_2 = '<script type="text/javascript">'
+		cut_3 = "</script>"
+
+		cut_data = str(data).replace(cut_1,"")
+		cut_data = str(cut_data).replace(cut_2,"")
+		cut_data = str(cut_data).replace(cut_3,"")
+		_r = re.sub("\n","",str(cut_data))
+		r_value = re.sub("['();]","",str(_r))
+		r_value = str(r_value)
+
+		global service_code
+		service_code = decode_service_code(service_code_origin, r_value)
+
+	def buttonDisable(self):
+		self.btn_delPost.setEnabled(False)
+		self.btn_delComment.setEnabled(False)
+		self.btn_delScrap.setEnabled(False)
+		self.btn_delGuestbook.setEnabled(False)
+		self.btn_cancelDelProcess.setEnabled(True)
+
+	def buttonEnable(self):
+		self.btn_delPost.setEnabled(True)
+		self.btn_delPost.setText("게시글 삭제")
+		self.btn_delComment.setEnabled(True)
+		self.btn_delComment.setText("댓글 삭제")
+		self.btn_delScrap.setEnabled(True)
+		self.btn_delScrap.setText("스크랩 삭제")
+		self.btn_delGuestbook.setEnabled(True)
+		self.btn_delGuestbook.setText("방명록 삭제")
+		self.btn_cancelDelProcess.setEnabled(False)
+
+	def cancelDelProcess(self, event):
+		if (loginFlag):
+			logger.debug("Delete cancel process event triggered")
+			stopDel = QMessageBox.question(self, "경고", "삭제가 진행중입니다.\n정말 삭제 작업을 중단하시겠습니까?", QMessageBox.Yes | QMessageBox.No)
+			if stopDel == QMessageBox.Yes:
+				logger.info("Delete process has stopped by user's request")
+				global deleteFlag
+				deleteFlag = False
+				self.buttonEnable()
+			else:
+				pass
+		else:
+			logger.warning("Not logged in")
+			QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
 
 class DCleanerGUI(QMainWindow):
 	def __init__(self):
@@ -582,7 +542,7 @@ class DCleanerGUI(QMainWindow):
 		self.setWindowTitle("ThanosCleaner")
 		self.setWindowIcon(QIcon("./dependencies/image/Thanos.ico"))
 		scaling = self.logicalDpiX() / 96.0
-		self.setFixedSize(300 * scaling, 360 * scaling)
+		self.setFixedSize(300 * scaling, 400 * scaling)
 		self.setStyleSheet("font-size: %dpt;" % (9 * scaling))
 		self.show()
 
