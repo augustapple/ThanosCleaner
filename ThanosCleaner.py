@@ -178,7 +178,7 @@ class MyWidget(QWidget):
 		self.userPw = self.qle_pw.text()
 
 		if(self.userId == "" or self.userPw == ""):
-			logger.warninging("UserID or Password isn't filled")
+			logger.warning("ID or password cannot be blank!")
 			QMessageBox.warning(self, "경고", "아이디, 비밀번호를 입력해주세요", QMessageBox.Yes)
 		else:
 			loginSess = self.login(self.userId, self.userPw)
@@ -186,7 +186,7 @@ class MyWidget(QWidget):
 				logger.error("Login failed")
 				QMessageBox.warning(self, "경고", "로그인에 실패했습니다", QMessageBox.Yes)
 			else:
-				logger.info("Logged in with %s" % self.userId)
+				logger.info("Logged in as %s" % self.userId)
 				global loginFlag
 				loginFlag = True
 				self.btn_login.setEnabled(False)
@@ -284,7 +284,7 @@ class MyWidget(QWidget):
 				content_form = soup.select("ul.cont_listbox > li")
 
 				if not content_form:
-					logger.info("Successfully deleted all comments!")
+					logger.info("All posts are deleted successfully!")
 					self.btn_delPost.setEnabled(True)
 					self.btn_delComment.setEnabled(True)
 					self.btn_delScrap.setEnabled(True)
@@ -362,7 +362,7 @@ class MyWidget(QWidget):
 				content_form = soup.select("ul.cont_listbox > li")
 
 				if not content_form:
-					logger.info("Successfully deleted all comments!")
+					logger.info("All comments are deleted successfully!")
 					self.btn_delPost.setEnabled(True)
 					self.btn_delComment.setEnabled(True)
 					self.btn_delScrap.setEnabled(True)
@@ -440,7 +440,7 @@ class MyWidget(QWidget):
 				content_form = soup.select("ul.cont_listbox > li")
 
 				if not content_form:
-					logger.info("Successfully deleted all scraps!")
+					logger.info("All scraps are deleted successfully!")
 					self.btn_delPost.setEnabled(True)
 					self.btn_delComment.setEnabled(True)
 					self.btn_delScrap.setEnabled(True)
@@ -503,7 +503,7 @@ class MyWidget(QWidget):
 				content_form = soup.select("ul.cont_listbox > li")
 
 				if not content_form:
-					logger.info("Successfully deleted all guestbooks!")
+					logger.info("All guestbooks are deleted successfully!")
 					self.btn_delPost.setEnabled(True)
 					self.btn_delComment.setEnabled(True)
 					self.btn_delScrap.setEnabled(True)
