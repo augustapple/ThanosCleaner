@@ -44,3 +44,7 @@ ThanosCleaner의 구조를 짜는데 도와주신 [쪼리핑](https://github.com
 해당 리포지토리의 [Issues](https://github.com/augustapple/ThanosCleaner/issues)에 작성해주시거나
 
 augustapple77@gmail.com 으로 보내주시면 됩니다.
+
+클리너를 다운로드 받으신 폴더 내에 thanoscleaner.log 파일을 동봉해주시면 원인 파악에 큰 도움이 되니
+
+꼭!! 함께 보내주시기 바랍니다. 감사합니다.
