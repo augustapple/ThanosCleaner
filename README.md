@@ -27,6 +27,9 @@ pyinstaller -F -w --icon="dependencies/image/Thanos.ico" ThanosCleaner.py
 로그아웃은 언제든 가능하며, 삭제가 진행중일 경우 로그아웃을 하기 전 유저에게 확인을 묻습니다.
 
 ## Special Thanks
+
+제작하신 클리너의 코드 비상업적 사용을 허가해주신 [logs3](https://github.com/logs3) 님
+
 베타버전을 테스트해준 ㄴㅁㅈㄱ, 대리영정, 플링츄, 배교자 님
 
 이슈를 제보해주신 [craftingmod](https://github.com/craftingmod) 님
