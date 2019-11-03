@@ -502,7 +502,7 @@ class MyWidget(QWidget):
 		self.btn_delGuestbook.setText("방명록 삭제")
 		self.btn_cancelDelProcess.setEnabled(False)
 
-	def cancelDelProcess(self, event):
+	def cancelDelProcess(self):
 		if (loginFlag):
 			logger.debug("Delete cancel process event triggered")
 			stopDel = QMessageBox.question(self, "경고", "삭제가 진행중입니다.\n정말 삭제 작업을 중단하시겠습니까?", QMessageBox.Yes | QMessageBox.No)
