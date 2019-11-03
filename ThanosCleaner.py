@@ -542,7 +542,7 @@ class DCleanerGUI(QMainWindow):
 		self.setWindowTitle("ThanosCleaner")
 		self.setWindowIcon(QIcon("./dependencies/image/Thanos.ico"))
 		scaling = self.logicalDpiX() / 96.0
-		self.setFixedSize(300 * scaling, 370 * scaling)
+		self.setFixedSize(300 * scaling, 400 * scaling)
 		self.setStyleSheet("font-size: %dpt;" % (9 * scaling))
 		self.show()
 
