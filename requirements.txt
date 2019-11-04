@@ -3,3 +3,4 @@ Js2Py==0.66
 lxml==4.4.1
 PyQt5==5.13.1
 requests==2.22.0
+packaging==19.2
