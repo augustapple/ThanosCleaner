@@ -13,17 +13,6 @@ import logging
 import logging.handlers
 from bs4 import BeautifulSoup
 
-logger = logging.getLogger("Cleaner")
-logger.setLevel(logging.DEBUG)
-formatter = logging.Formatter("[%(asctime)s | %(levelname)s | %(name)s | Line %(lineno)s] > %(message)s", "%Y-%m-%d %H:%M:%S")
-fileHandler = logging.FileHandler("./thanoscleaner.log")
-fileHandler.setFormatter(formatter)
-fileHandler.setLevel(logging.INFO)
-streamHandler = logging.StreamHandler()
-streamHandler.setFormatter(formatter)
-logger.addHandler(fileHandler)
-logger.addHandler(streamHandler)
-
 loginFlag = False
 exitFlag = False
 deleteFlag = False
@@ -60,7 +49,7 @@ decode_service_code = js2py.eval_js(decode_service_code)
 class MyWidget(QWidget):
 	def __init__(self):
 		super().__init__()
-		logger.debug("Application started")
+		rootLogger.debug("Application started")
 
 		layout = QGridLayout()
 		
@@ -122,24 +111,25 @@ class MyWidget(QWidget):
 		layout.addWidget(self.btn_delScrap, 12, 2)
 		layout.addWidget(self.btn_delGuestbook, 13, 2)
 		layout.addWidget(self.btn_cancelDelProcess, 14, 2)
+
+		rootLogger.debug("Application initialized successfully")
 	
 	def hidePassword(self, state):
 		if state == Qt.Checked:
-			logger.debug("Hide password is enabled")
 			self.qle_pw.setEchoMode(QLineEdit.Password)
 			self.cbx_pw.setStatusTip("비밀번호 보이기")
+			rootLogger.debug("Hide password is enabled")
 		else:
-			logger.debug("Hide password is disabled")
 			self.qle_pw.setEchoMode(QLineEdit.Normal)
 			self.cbx_pw.setStatusTip("비밀번호 숨기기")
+			rootLogger.debug("Hide password is disabled")
 
 	def logout(self):
 		global SESS, loginFlag, deleteFlag
 		if deleteFlag:
-			logger.debug("Logout event detected while delete process")
+			rootLogger.debug("Logout event detected while delete process")
 			logoutCheck = QMessageBox.warning(self, "경고", "삭제가 진행중입니다. 로그아웃 하시겠습니까?", QMessageBox.Yes | QMessageBox.No)
 			if logoutCheck == QMessageBox.Yes:
-				logger.info("Logged out")
 				loginFlag = False
 				SESS.close()
 				self.btn_login.setEnabled(True)
@@ -150,8 +140,8 @@ class MyWidget(QWidget):
 				self.qle_pw.setEnabled(True)
 				self.qle_pw.setText("")
 				self.buttonEnable()
+				rootLogger.info("Logged out")
 		else:
-			logger.info("Logged out")
 			loginFlag = False
 			SESS.close()
 			self.btn_login.setEnabled(True)
@@ -163,21 +153,21 @@ class MyWidget(QWidget):
 			self.qle_pw.setText("")
 			self.buttonEnable()
 			deleteFlag = False
+			rootLogger.info("Logged out")
 
 	def tryLogin(self):
 		self.userId = self.qle_id.text()
 		self.userPw = self.qle_pw.text()
 
 		if(self.userId == "" or self.userPw == ""):
-			logger.warning("ID or password cannot be blank!")
 			QMessageBox.warning(self, "경고", "아이디, 비밀번호를 입력해주세요", QMessageBox.Yes)
+			rootLogger.warning("ID or password cannot be blank!")
 		else:
 			loginSess = self.login(self.userId, self.userPw)
 			if not loginSess:
-				logger.error("Login failed")
 				QMessageBox.warning(self, "경고", "로그인에 실패했습니다", QMessageBox.Yes)
+				rootLogger.error("Login failed")
 			else:
-				logger.info("Logged in as %s" % self.userId)
 				global loginFlag
 				loginFlag = True
 				self.btn_login.setEnabled(False)
@@ -187,9 +177,10 @@ class MyWidget(QWidget):
 				self.qle_pw.setEnabled(False)
 				gangsinThr = (threading.Thread(target=self.gangsin, args=(SESS, self.userId)))
 				gangsinThr.start()
+				rootLogger.info("Logged in as %s" % self.userId)
 	
 	def login(self, userId, userPw):
-		logger.debug("Logging in on dcinside..")
+		rootLogger.debug("Trying to login..")
 		session = requests.session()
 
 		global SESS
@@ -222,15 +213,17 @@ class MyWidget(QWidget):
 		}
 
 		if "history.back(-1);" in req.text:
+			rootLogger.error("Cannot create login session!")
 			return 0
 		else:
+			rootLogger.info("Login session created successfully")
 			SESS = session
 			return SESS
 	
 	def tryDelPost(self):
 		try:
 			if(loginFlag):
-				logger.info("Initializing post delete process..")
+				rootLogger.info("Initializing post delete process..")
 				self.get_service_code(self.userId, 'posting')
 
 				self.buttonDisable()
@@ -238,10 +231,10 @@ class MyWidget(QWidget):
 				self.postDelThr = (threading.Thread(target=self.delPost, args=(SESS, self.userId, service_code)))
 				self.postDelThr.start()
 			else:
-				logger.warning("Not logged in")
+				rootLogger.warning("Can't delete post without login")
 				QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
 		except Exception as e:
-			logger.critical(e)
+			rootLogger.critical(e)
 			pass
 
 	def delPost(self, SESS, userId, service_code):
@@ -256,7 +249,7 @@ class MyWidget(QWidget):
 				content_form = soup.select("ul.cont_listbox > li")
 
 				if not content_form:
-					logger.info("All posts are deleted successfully!")
+					rootLogger.info("All posts are deleted successfully")
 					self.buttonEnable()
 					self.btn_delPost.setText("게시글 삭제")
 					deleteFlag = False
@@ -271,10 +264,10 @@ class MyWidget(QWidget):
 					"service_code" : service_code
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
-				logger.debug(req.text)
+				rootLogger.debug(req.text)
 				time.sleep(0.5)
 			except Exception as e:
-				logger.critical(e)
+				rootLogger.critical(e)
 				self.buttonEnable()
 				self.btn_delPost.setText("게시글 삭제")
 				deleteFlag = False
@@ -283,7 +276,7 @@ class MyWidget(QWidget):
 	def tryDelComment(self):
 		try:
 			if(loginFlag):
-				logger.info("Initializing comment delete process..")
+				rootLogger.info("Initializing comment delete process..")
 				self.get_service_code(self.userId, 'comment')
 
 				self.buttonDisable()
@@ -291,10 +284,10 @@ class MyWidget(QWidget):
 				self.commentDelThr = (threading.Thread(target=self.delComment, args=(SESS, self.userId, service_code)))
 				self.commentDelThr.start()
 			else:
-				logger.warning("Not logged in")
+				rootLogger.warning("Can't delete comment without login")
 				QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
 		except Exception as e:
-			logger.critical(e)
+			rootLogger.critical(e)
 			pass
 
 	def delComment(self, SESS, userId, service_code):
@@ -309,7 +302,7 @@ class MyWidget(QWidget):
 				content_form = soup.select("ul.cont_listbox > li")
 
 				if not content_form:
-					logger.info("All comments are deleted successfully!")
+					rootLogger.info("All comments are deleted successfully")
 					self.buttonEnable()
 					self.btn_delComment.setText("댓글 삭제")
 					deleteFlag = False
@@ -324,10 +317,10 @@ class MyWidget(QWidget):
 					"service_code" : service_code
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
-				logger.debug(req.text)
+				rootLogger.debug(req.text)
 				time.sleep(0.5)
 			except Exception as e:
-				logger.critical(e)
+				rootLogger.critical(e)
 				self.buttonEnable()
 				self.btn_delComment.setText("댓글 삭제")
 				deleteFlag = False
@@ -336,7 +329,7 @@ class MyWidget(QWidget):
 	def tryDelScrap(self):
 		try:
 			if(loginFlag):
-				logger.info("Initializing scrap delete process..")
+				rootLogger.info("Initializing scrap delete process..")
 				self.get_service_code(self.userId, 'scrap')
 
 				self.buttonDisable()
@@ -344,10 +337,10 @@ class MyWidget(QWidget):
 				self.scrapDelThr = (threading.Thread(target=self.delScrap, args=(SESS, self.userId, service_code)))
 				self.scrapDelThr.start()
 			else:
-				logger.warning("Not logged in")
+				rootLogger.warning("Can't delete scrap without login")
 				QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
 		except Exception as e:
-			logger.critical(e)
+			rootLogger.critical(e)
 			pass
 
 	def delScrap(self, SESS, userId, service_code):
@@ -362,7 +355,7 @@ class MyWidget(QWidget):
 				content_form = soup.select("ul.cont_listbox > li")
 
 				if not content_form:
-					logger.info("All scraps are deleted successfully!")
+					rootLogger.info("All scraps are deleted successfully")
 					self.buttonEnable()
 					self.btn_delScrap.setText("스크랩 삭제")
 					deleteFlag = False
@@ -377,10 +370,10 @@ class MyWidget(QWidget):
 					"service_code" : service_code
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
-				logger.debug(req.text)
+				rootLogger.debug(req.text)
 				time.sleep(0.5)
 			except Exception as e:
-				logger.critical(e)
+				rootLogger.critical(e)
 				self.buttonEnable()
 				self.btn_delScrap.setText("스크랩 삭제")
 				deleteFlag = False
@@ -389,7 +382,7 @@ class MyWidget(QWidget):
 	def tryDelGuestbook(self):
 		try:
 			if(loginFlag):
-				logger.info("Initializing guestbook delete process..")
+				rootLogger.info("Initializing guestbook delete process..")
 				req = SESS.get("https://gallog.dcinside.com/%s/guestbook" % self.userId)
 				soup = BeautifulSoup(req.text,"lxml")
 
@@ -398,10 +391,10 @@ class MyWidget(QWidget):
 				self.guestbookDelThr = (threading.Thread(target=self.delGuestbook, args=(SESS, self.userId)))
 				self.guestbookDelThr.start()
 			else:
-				logger.warning("Not logged in")
+				rootLogger.warning("Can't delete guestbook without login")
 				QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
 		except Exception as e:
-			logger.critical(e)
+			rootLogger.critical(e)
 			pass
 
 	def delGuestbook(self, SESS, userId):
@@ -416,7 +409,7 @@ class MyWidget(QWidget):
 				content_form = soup.select("ul.cont_listbox > li")
 
 				if not content_form:
-					logger.info("All guestbooks are deleted successfully!")
+					rootLogger.info("All guestbooks are deleted successfully")
 					self.buttonEnable()
 					self.btn_delGuestbook.setText("방명록 삭제")
 					deleteFlag = False
@@ -430,17 +423,17 @@ class MyWidget(QWidget):
 					"headnum" : dataNo
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/guestbook_ajax/delete" % userId, data=deleteData, timeout=10)
-				logger.debug(req.text)
+				rootLogger.debug(req.text)
 				time.sleep(0.5)
 			except Exception as e:
-				logger.critical(e)
+				rootLogger.critical(e)
 				self.buttonEnable()
 				self.btn_delGuestbook.setText("방명록 삭제")
 				deleteFlag = False
 				break
 
 	def gangsin(self, SESS, userId):
-		logger.debug("Refreshing gallog activities..")
+		rootLogger.debug("Refreshing gallog activities..")
 		global exitFlag, loginFlag
 		while exitFlag == False and loginFlag == True:
 			try:
@@ -461,7 +454,7 @@ class MyWidget(QWidget):
 					self.lbl_scrap.setText("스크랩 수 : 알 수 없음")
 					self.lbl_guestbook.setText("방명록 수 : 알 수 없음")
 			except Exception as e:
-				logger.critical(e)
+				rootLogger.critical(e)
 				pass
 
 	def get_service_code(self, userId, purpose):
@@ -483,6 +476,7 @@ class MyWidget(QWidget):
 
 		global service_code
 		service_code = decode_service_code(service_code_origin, r_value)
+		rootLogger.info("Service code has created")
 
 	def buttonDisable(self):
 		self.btn_delPost.setEnabled(False)
@@ -490,6 +484,7 @@ class MyWidget(QWidget):
 		self.btn_delScrap.setEnabled(False)
 		self.btn_delGuestbook.setEnabled(False)
 		self.btn_cancelDelProcess.setEnabled(True)
+		rootLogger.info("All buttons are disabled except cancelDelProcess")
 
 	def buttonEnable(self):
 		self.btn_delPost.setEnabled(True)
@@ -501,21 +496,14 @@ class MyWidget(QWidget):
 		self.btn_delGuestbook.setEnabled(True)
 		self.btn_delGuestbook.setText("방명록 삭제")
 		self.btn_cancelDelProcess.setEnabled(False)
+		rootLogger.info("All buttons are enabled except cancelDelProcess")
 
 	def cancelDelProcess(self):
 		if (loginFlag):
-			logger.debug("Delete cancel process event triggered")
-			stopDel = QMessageBox.question(self, "경고", "삭제가 진행중입니다.\n정말 삭제 작업을 중단하시겠습니까?", QMessageBox.Yes | QMessageBox.No)
-			if stopDel == QMessageBox.Yes:
-				logger.info("Delete process has stopped by user's request")
-				global deleteFlag
-				deleteFlag = False
-				self.buttonEnable()
-			else:
-				pass
-		else:
-			logger.warning("Not logged in")
-			QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
+			global deleteFlag
+			deleteFlag = False
+			self.buttonEnable()
+			rootLogger.info("Delete process has stopped by user's request")
 
 class DCleanerGUI(QMainWindow):
 	def __init__(self):
@@ -524,10 +512,12 @@ class DCleanerGUI(QMainWindow):
 		self.setCentralWidget(wg)
 		
 		infoMenu = QAction(QIcon("./dependencies/image/question.ico"), "&Info", self)
+		rootLogger.info("Question icon loaded successfully")
 		infoMenu.setShortcut("Ctrl+I")
 		infoMenu.setStatusTip("프로그램 정보 표시")
 		infoMenu.triggered.connect(self.showProgInfo)
 		exitMenu = QAction(QIcon("./dependencies/image/shutdown.ico"), "&Exit", self)
+		rootLogger.info("Exit icon loaded successfully")
 		exitMenu.setShortcut("Ctrl+Q")
 		exitMenu.setStatusTip("프로그램 종료")
 		exitMenu.triggered.connect(self.closeEventForShortcut)
@@ -542,9 +532,11 @@ class DCleanerGUI(QMainWindow):
 		self.setWindowTitle("ThanosCleaner")
 		self.setWindowIcon(QIcon("./dependencies/image/Thanos.ico"))
 		scaling = self.logicalDpiX() / 96.0
+		rootLogger.info("Set DPI Scaling to %f" % scaling)
 		self.setFixedSize(300 * scaling, 400 * scaling)
 		self.setStyleSheet("font-size: %dpt;" % (9 * scaling))
 		self.show()
+		
 
 	def showProgInfo(self):
 		infoBox = QMessageBox()
@@ -556,8 +548,10 @@ class DCleanerGUI(QMainWindow):
 			global exitFlag
 			exitFlag = True
 			event.accept()
+			rootLogger.info("Program terminated successfully")
 		else:
 			event.ignore()
+			rootLogger.info("Program terminate has canceled")
 
 	def closeEventForShortcut(self):
 		close = QMessageBox.question(self, "프로그램 종료", "클리너를 종료하시겠습니까?", QMessageBox.Yes | QMessageBox.No)
@@ -565,16 +559,31 @@ class DCleanerGUI(QMainWindow):
 			global exitFlag
 			exitFlag = True
 			QCoreApplication.instance().quit()
+			rootLogger.info("Program terminated successfully")
 		else:
+			rootLogger.info("Program terminate has canceled")
 			pass
 
+
+
 def isUserAdmin():
-    try:
-        return ctypes.windll.shell32.IsUserAnAdmin()
-    except:
-        return False
+	try:
+		return ctypes.windll.shell32.IsUserAnAdmin()
+	except:
+		return False
 
 if isUserAdmin():
+	rootLogger = logging.getLogger("Cleaner")
+	rootLogger.setLevel(logging.DEBUG)
+	formatter = logging.Formatter("[%(asctime)s | %(levelname)s | %(name)s | Line %(lineno)s] > %(message)s", "%Y-%m-%d %H:%M:%S")
+	now = time.localtime()
+	fileHandler = logging.FileHandler("./thanoscleaner_%d_%d_%d_%d_%d_%d.log" % (now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec))
+	fileHandler.setFormatter(formatter)
+	fileHandler.setLevel(logging.NOTSET)
+	streamHandler = logging.StreamHandler()
+	streamHandler.setFormatter(formatter)
+	rootLogger.addHandler(fileHandler)
+	rootLogger.addHandler(streamHandler)
 	if __name__ == "__main__":
 		app = QApplication(sys.argv)
 		main = DCleanerGUI()
