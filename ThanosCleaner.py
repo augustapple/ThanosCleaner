@@ -509,9 +509,9 @@ class MyWidget(QWidget):
 		try:
 			data = requests.get(url=UPDATE_URL).json()
 			if version.parse(VERSION) < version.parse(data['version']):
+				rootLogger.info("New version %s is available!" % data['version'])
 				GIT_RELEASE_URL = "https://github.com/augustapple/ThanosCleaner/releases/%s" % data['version']
 				QMessageBox.information(self, "업데이트 발견", "업데이트가 발견되었습니다!<br>다운로드: <a href='%s'>ThanosCleaner %s</a>" % (GIT_RELEASE_URL, data['version']), QMessageBox.Yes)
-				rootLogger.info("New version %s is available!" % data['version'])
 			else:
 				rootLogger.info("No updates available.")
 				QMessageBox.information(self, "최신 버전입니다", "업데이트가 발견되지 않았습니다.", QMessageBox.Yes)
