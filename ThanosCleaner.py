@@ -17,7 +17,7 @@ from bs4 import BeautifulSoup
 loginFlag = False
 exitFlag = False
 deleteFlag = False
-VERSION = "1.6"
+VERSION = "1.61"
 UPDATE_URL = "https://github.com/augustapple/ThanosCleaner/raw/master/version.json"
 
 decode_service_code='''
@@ -55,7 +55,7 @@ class MyWidget(QWidget):
 		rootLogger.debug("Application started")
 
 		layout = QGridLayout()
-		
+
 		self.lbl_id = QLabel("ID : ", self)
 		self.qle_id = QLineEdit(self)
 		self.qle_id.returnPressed.connect(self.tryLogin)
@@ -579,7 +579,10 @@ class DCleanerGUI(QMainWindow):
 
 def isUserAdmin():
 	try:
-		return ctypes.windll.shell32.IsUserAnAdmin()
+		if os.name == 'nt':
+			return ctypes.windll.shell32.IsUserAnAdmin()
+		else:
+			return True
 	except:
 		return False
 
