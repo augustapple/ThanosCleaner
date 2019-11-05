@@ -17,7 +17,7 @@ from bs4 import BeautifulSoup
 loginFlag = False
 exitFlag = False
 deleteFlag = False
-VERSION = "1.61"
+VERSION = "1.62"
 UPDATE_URL = "https://github.com/augustapple/ThanosCleaner/raw/master/version.json"
 
 decode_service_code='''
