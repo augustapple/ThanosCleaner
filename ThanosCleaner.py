@@ -545,10 +545,17 @@ class DCleanerGUI(QMainWindow):
 
 		self.setWindowTitle("ThanosCleaner")
 		self.setWindowIcon(QIcon("./dependencies/image/Thanos.ico"))
-		scaling = self.logicalDpiX() / 96.0
-		rootLogger.info("Set DPI Scaling to %f" % scaling)
-		self.setFixedSize(300 * scaling, 400 * scaling)
-		self.setStyleSheet("font-size: %dpt;" % (9 * scaling))
+		winScaling = self.logicalDpiX() / 96.0
+		macScaling = self.logicalDpiX() / 72.0
+		if sys.platform == "darwin":
+			rootLogger.info("Set DPI Scaling to %f" % macScaling)
+			self.setFixedSize(300 * macScaling, 400 * macScaling)
+			self.setStyleSheet("font-size: %dpx;" % (12 * macScaling))
+		else:
+			rootLogger.info("Set DPI Scaling to %f" % winScaling)
+			self.setFixedSize(300 * winScaling, 400 * winScaling)
+			self.setStyleSheet("font-size: %dpx;" % (12 * winScaling))
+		
 		self.show()
 
 	def showProgInfo(self):
