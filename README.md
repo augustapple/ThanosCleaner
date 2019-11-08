@@ -11,20 +11,26 @@
 아래의 명령어로 직접 패키징하여 사용할 수 있습니다.
 
 ```
+# 구성요소 설치
+pip install -r requirements.txt
+
+# PyInstaller를 이용한 컴파일
 pyinstaller -F -w --icon="dependencies/image/Thanos.ico" ThanosCleaner.py
 ```
 
 프로그램을 실행하면 아래와 같은 화면이 나옵니다.
 
-![UI](https://user-images.githubusercontent.com/57178921/68082112-f8bb1500-fe5b-11e9-9f62-474edc41381a.PNG)
+![UI](https://user-images.githubusercontent.com/27128153/68472671-4ffa2480-0264-11ea-9039-c884f297fab9.png)
 
 해당 화면에 아이디와 비밀번호를 입력하고 엔터 혹은 로그인 버튼을 눌러 로그인을 합니다.
 
 아래와 같이 로그인이 완료되었을 경우, 게시글/댓글/스크랩/방명록 삭제 버튼을 눌러 삭제를 시작합니다.
 
-![loginUI](https://user-images.githubusercontent.com/57178921/68082111-f8bb1500-fe5b-11e9-991d-42999fe07700.PNG)
+![loginUI](https://user-images.githubusercontent.com/27128153/68472670-4e306100-0264-11ea-8b04-07c5a3f9d457.png)
 
 로그아웃은 언제든 가능하며, 삭제가 진행중일 경우 로그아웃을 하기 전 유저에게 확인을 묻습니다.
+
+또한 삭제가 시작되었을 경우 삭제 중단 버튼이 활성화되어 삭제가 완료되기 전 중도 취소할 수 있는 기능을 제공합니다.
 
 ## Special Thanks
 
@@ -41,10 +47,11 @@ ThanosCleaner를 직접 검수해주신 [티바이트](https://github.com/tibyte
 ThanosCleaner의 구조를 짜는데 도와주신 [쪼리핑](https://github.com/JJoriping) 님
 
 ## 오류가 발생했을 시
-해당 리포지토리의 [Issues](https://github.com/augustapple/ThanosCleaner/issues)에 작성해주시거나
+해당 리포지토리의 [Issues](https://github.com/augustapple/ThanosCleaner/issues) 또는
 
-augustapple77@gmail.com 으로 보내주시면 됩니다.
+augustapple77@gmail.com 으로 제보해주시면 됩니다.
 
-클리너를 다운로드 받으신 폴더 내에 thanoscleaner.log 파일을 동봉해주시면 원인 파악에 큰 도움이 되니
+제보 시 클리너 폴더 내부의 `logs/thanoscleaner_YYMMDD.log` 파일을 동봉해주셔야 자세한 원인 파악 후 조치가 가능하니
 
-꼭!! 함께 보내주시기 바랍니다. 감사합니다.
+꼭!! 해당 파일을 함께 보내주시기 바랍니다. 감사합니다.
+

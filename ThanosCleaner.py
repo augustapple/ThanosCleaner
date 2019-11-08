@@ -17,7 +17,7 @@ from bs4 import BeautifulSoup
 loginFlag = False
 exitFlag = False
 deleteFlag = False
-VERSION = "1.62"
+VERSION = "2.0.0"
 UPDATE_URL = "https://github.com/augustapple/ThanosCleaner/raw/master/version.json"
 
 decode_service_code='''
@@ -49,6 +49,22 @@ decode_service_code='''
     '''
 decode_service_code = js2py.eval_js(decode_service_code)
 
+def checkUpdate():
+	global VERSION, UPDATE_URL
+	rootLogger.info("Checking if new version is available..")
+	try:
+		data = requests.get(url=UPDATE_URL).json()
+		if version.parse(VERSION) < version.parse(data['version']):
+			rootLogger.info("New version %s is available!" % data['version'])
+			GIT_RELEASE_URL = "https://github.com/augustapple/ThanosCleaner/releases/%s" % data['version']
+			QMessageBox.information(None, "업데이트 발견", "업데이트가 발견되었습니다!<br>다운로드: <a href='%s'>ThanosCleaner %s</a>" % (GIT_RELEASE_URL, data['version']), QMessageBox.Yes)
+		else:
+				rootLogger.info("No updates available.")
+				QMessageBox.information(None, "최신 버전입니다", "업데이트가 발견되지 않았습니다.", QMessageBox.Yes)
+	except Exception as e:
+		rootLogger.critical(e)
+		pass
+
 class MyWidget(QWidget):
 	def __init__(self):
 		super().__init__()
@@ -56,13 +72,13 @@ class MyWidget(QWidget):
 
 		layout = QGridLayout()
 
-		self.lbl_id = QLabel("ID : ", self)
 		self.qle_id = QLineEdit(self)
+		self.qle_id.setPlaceholderText("아이디")
 		self.qle_id.returnPressed.connect(self.tryLogin)
-		self.lbl_pw = QLabel("PW : ", self)
 		self.qle_pw = QLineEdit(self)
+		self.qle_pw.setPlaceholderText("비밀번호")
 		self.qle_pw.returnPressed.connect(self.tryLogin)
-		self.cbx_pw = QCheckBox("숨김", self)
+		self.cbx_pw = QCheckBox("비밀번호 숨김", self)
 		self.cbx_pw.stateChanged.connect(self.hidePassword)
 		self.cbx_pw.toggle()
 		self.btn_login = QPushButton("로그인", self)
@@ -97,25 +113,23 @@ class MyWidget(QWidget):
 
 		self.setLayout(layout)
 
-		layout.addWidget(self.lbl_id, 1, 1)
 		layout.addWidget(self.qle_id, 1, 2)
-		layout.addWidget(self.lbl_pw, 2, 1)
 		layout.addWidget(self.qle_pw, 2, 2)
-		layout.addWidget(self.cbx_pw, 2, 3)
-		layout.addWidget(self.btn_login, 3, 2)
-		layout.addWidget(self.btn_logout, 4, 2)
-		layout.addWidget(self.lbl_status, 5, 2, 1, 3)
-		layout.addWidget(self.lbl_post, 6, 2)
-		layout.addWidget(self.lbl_comment, 7, 2)
-		layout.addWidget(self.lbl_scrap, 8, 2)
-		layout.addWidget(self.lbl_guestbook, 9, 2)
-		layout.addWidget(self.btn_delPost, 10, 2)
-		layout.addWidget(self.btn_delComment, 11, 2)
-		layout.addWidget(self.btn_delScrap, 12, 2)
-		layout.addWidget(self.btn_delGuestbook, 13, 2)
-		layout.addWidget(self.btn_cancelDelProcess, 14, 2)
+		layout.addWidget(self.cbx_pw, 3, 2)
+		layout.addWidget(self.btn_login, 1, 3)
+		layout.addWidget(self.btn_logout, 2, 3)
+		layout.addWidget(self.lbl_status, 6, 2, 1, 3)
+		layout.addWidget(self.lbl_post, 7, 2)
+		layout.addWidget(self.lbl_comment, 8, 2)
+		layout.addWidget(self.lbl_scrap, 9, 2)
+		layout.addWidget(self.lbl_guestbook, 10, 2)
+		layout.addWidget(self.btn_delPost, 11, 2, 1, 3)
+		layout.addWidget(self.btn_delComment, 12, 2, 1, 3)
+		layout.addWidget(self.btn_delScrap, 13, 2, 1, 3)
+		layout.addWidget(self.btn_delGuestbook, 14, 2, 1, 3)
+		layout.addWidget(self.btn_cancelDelProcess, 15, 2, 1, 3)
 		rootLogger.debug("Application initialized successfully")
-		self.checkUpdate()
+		checkUpdate()
 
 	def hidePassword(self, state):
 		if state == Qt.Checked:
@@ -257,6 +271,7 @@ class MyWidget(QWidget):
 					self.buttonEnable()
 					self.btn_delPost.setText("게시글 삭제")
 					deleteFlag = False
+					QMessageBox.information(None, "삭제 완료", "모든 게시글을 성공적으로 삭제하였습니다!")
 					break
 				else:
 					pass
@@ -308,6 +323,7 @@ class MyWidget(QWidget):
 					self.buttonEnable()
 					self.btn_delComment.setText("댓글 삭제")
 					deleteFlag = False
+					QMessageBox.information(None, "삭제 완료", "모든 댓글을 성공적으로 삭제하였습니다!")
 					break
 				else:
 					pass
@@ -359,6 +375,7 @@ class MyWidget(QWidget):
 					self.buttonEnable()
 					self.btn_delScrap.setText("스크랩 삭제")
 					deleteFlag = False
+					QMessageBox.information(None, "삭제 완료", "모든 스크랩을 성공적으로 삭제하였습니다!")
 					break
 				else:
 					pass
@@ -411,6 +428,7 @@ class MyWidget(QWidget):
 					self.buttonEnable()
 					self.btn_delGuestbook.setText("방명록 삭제")
 					deleteFlag = False
+					QMessageBox.information(None, "삭제 완료", "모든 방명록을 성공적으로 삭제하였습니다!")
 					break
 				else:
 					pass
@@ -503,22 +521,6 @@ class MyWidget(QWidget):
 			rootLogger.warning("Can't delete comment without login")
 			QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
 
-	def checkUpdate(self):
-		global VERSION, UPDATE_URL
-		rootLogger.info("Checking if new version is available..")
-		try:
-			data = requests.get(url=UPDATE_URL).json()
-			if version.parse(VERSION) < version.parse(data['version']):
-				rootLogger.info("New version %s is available!" % data['version'])
-				GIT_RELEASE_URL = "https://github.com/augustapple/ThanosCleaner/releases/%s" % data['version']
-				QMessageBox.information(self, "업데이트 발견", "업데이트가 발견되었습니다!<br>다운로드: <a href='%s'>ThanosCleaner %s</a>" % (GIT_RELEASE_URL, data['version']), QMessageBox.Yes)
-			else:
-				rootLogger.info("No updates available.")
-				QMessageBox.information(self, "최신 버전입니다", "업데이트가 발견되지 않았습니다.", QMessageBox.Yes)
-		except Exception as e:
-			rootLogger.critical(e)
-			pass
-
 class DCleanerGUI(QMainWindow):
 	def __init__(self):
 		super().__init__()
@@ -528,8 +530,13 @@ class DCleanerGUI(QMainWindow):
 		infoMenu = QAction(QIcon("./dependencies/image/question.ico"), "&Info", self)
 		rootLogger.info("Question icon loaded successfully")
 		infoMenu.setShortcut("Ctrl+I")
-		infoMenu.setStatusTip("프로그램 정보 표시")
 		infoMenu.triggered.connect(self.showProgInfo)
+		infoMenu.setStatusTip("프로그램 정보 표시")
+		updateMenu = QAction(QIcon("./dependencies/image/update.ico"), "&Update", self)
+		rootLogger.info("Update icon loaded successfully")
+		updateMenu.setShortcut("Ctrl+T")
+		updateMenu.setStatusTip("업데이트 확인")
+		updateMenu.triggered.connect(checkUpdate)
 		exitMenu = QAction(QIcon("./dependencies/image/shutdown.ico"), "&Exit", self)
 		rootLogger.info("Exit icon loaded successfully")
 		exitMenu.setShortcut("Ctrl+Q")
@@ -541,20 +548,21 @@ class DCleanerGUI(QMainWindow):
 		menubar = self.menuBar()
 		fileMenu = menubar.addMenu("&Menu")
 		fileMenu.addAction(infoMenu)
+		fileMenu.addAction(updateMenu)
 		fileMenu.addAction(exitMenu)
 
 		self.setWindowTitle("ThanosCleaner")
 		self.setWindowIcon(QIcon("./dependencies/image/Thanos.ico"))
-		winScaling = self.logicalDpiX() / 96.0
-		macScaling = self.logicalDpiX() / 72.0
-		if sys.platform == "darwin":
-			rootLogger.info("Set DPI Scaling to %f" % macScaling)
-			self.setFixedSize(300 * macScaling, 400 * macScaling)
-			self.setStyleSheet("font-size: %dpx;" % (12 * macScaling))
+		if sys.platform == "darwin" or sys.platform == "linux":
+			scalingSize = self.logicalDpiX() / 72.0
+			rootLogger.info("Set DPI Scaling to %f" % scalingSize)
+			self.setFixedSize(300 * scalingSize, 400 * scalingSize)
+			self.setStyleSheet("font-size: %dpx;" % (12 * scalingSize))
 		else:
-			rootLogger.info("Set DPI Scaling to %f" % winScaling)
-			self.setFixedSize(300 * winScaling, 400 * winScaling)
-			self.setStyleSheet("font-size: %dpx;" % (12 * winScaling))
+			scalingSize = self.logicalDpiX() / 96.0
+			rootLogger.info("Set DPI Scaling to %f" % scalingSize)
+			self.setFixedSize(300 * scalingSize, 400 * scalingSize)
+			self.setStyleSheet("font-size: %dpx;" % (12 * scalingSize))
 		
 		self.show()
 
@@ -594,19 +602,19 @@ def isUserAdmin():
 		return False
 
 if isUserAdmin():
-	os.makedirs("./logs", exist_ok=True)
-	rootLogger = logging.getLogger("Cleaner")
-	rootLogger.setLevel(logging.DEBUG)
-	formatter = logging.Formatter("[%(asctime)s | %(levelname)s | %(name)s | Line %(lineno)s] > %(message)s", "%Y-%m-%d %H:%M:%S")
-	now = time.localtime()
-	fileHandler = logging.FileHandler("./logs/thanoscleaner_%d_%d_%d_%d_%d_%d.log" % (now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec))
-	fileHandler.setFormatter(formatter)
-	fileHandler.setLevel(logging.NOTSET)
-	streamHandler = logging.StreamHandler()
-	streamHandler.setFormatter(formatter)
-	rootLogger.addHandler(fileHandler)
-	rootLogger.addHandler(streamHandler)
 	if __name__ == "__main__":
+		os.makedirs("./logs", exist_ok=True)
+		rootLogger = logging.getLogger("Cleaner")
+		rootLogger.setLevel(logging.DEBUG)
+		formatter = logging.Formatter("[%(asctime)s | %(levelname)s | %(name)s | Line %(lineno)s] > %(message)s", "%Y-%m-%d %H:%M:%S")
+		now = time.localtime()
+		fileHandler = logging.FileHandler("./logs/thanoscleaner_%d_%d_%d_%d_%d_%d.log" % (now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec))
+		fileHandler.setFormatter(formatter)
+		fileHandler.setLevel(logging.NOTSET)
+		streamHandler = logging.StreamHandler()
+		streamHandler.setFormatter(formatter)
+		rootLogger.addHandler(fileHandler)
+		rootLogger.addHandler(streamHandler)
 		app = QApplication(sys.argv)
 		main = DCleanerGUI()
 		main.show()
