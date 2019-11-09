@@ -271,7 +271,6 @@ class MyWidget(QWidget):
 					self.buttonEnable()
 					self.btn_delPost.setText("게시글 삭제")
 					deleteFlag = False
-					QMessageBox.information(None, "삭제 완료", "모든 게시글을 성공적으로 삭제하였습니다!")
 					break
 				else:
 					pass
@@ -284,7 +283,7 @@ class MyWidget(QWidget):
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
 				rootLogger.debug(req.text)
-				time.sleep(0.5)
+				time.sleep(0.4)
 			except Exception as e:
 				rootLogger.critical(e)
 				pass
@@ -323,7 +322,6 @@ class MyWidget(QWidget):
 					self.buttonEnable()
 					self.btn_delComment.setText("댓글 삭제")
 					deleteFlag = False
-					QMessageBox.information(None, "삭제 완료", "모든 댓글을 성공적으로 삭제하였습니다!")
 					break
 				else:
 					pass
@@ -336,7 +334,7 @@ class MyWidget(QWidget):
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
 				rootLogger.debug(req.text)
-				time.sleep(0.5)
+				time.sleep(0.4)
 			except Exception as e:
 				rootLogger.critical(e)
 				pass
@@ -375,7 +373,6 @@ class MyWidget(QWidget):
 					self.buttonEnable()
 					self.btn_delScrap.setText("스크랩 삭제")
 					deleteFlag = False
-					QMessageBox.information(None, "삭제 완료", "모든 스크랩을 성공적으로 삭제하였습니다!")
 					break
 				else:
 					pass
@@ -388,7 +385,7 @@ class MyWidget(QWidget):
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
 				rootLogger.debug(req.text)
-				time.sleep(0.5)
+				time.sleep(0.4)
 			except Exception as e:
 				rootLogger.critical(e)
 				pass
@@ -428,7 +425,6 @@ class MyWidget(QWidget):
 					self.buttonEnable()
 					self.btn_delGuestbook.setText("방명록 삭제")
 					deleteFlag = False
-					QMessageBox.information(None, "삭제 완료", "모든 방명록을 성공적으로 삭제하였습니다!")
 					break
 				else:
 					pass
@@ -440,7 +436,7 @@ class MyWidget(QWidget):
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/guestbook_ajax/delete" % userId, data=deleteData, timeout=10)
 				rootLogger.debug(req.text)
-				time.sleep(0.5)
+				time.sleep(0.4)
 			except Exception as e:
 				rootLogger.critical(e)
 				pass
