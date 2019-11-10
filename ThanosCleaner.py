@@ -17,7 +17,7 @@ from bs4 import BeautifulSoup
 loginFlag = False
 exitFlag = False
 deleteFlag = False
-VERSION = "2.0.0"
+VERSION = "2.0.1"
 UPDATE_URL = "https://github.com/augustapple/ThanosCleaner/raw/master/version.json"
 
 decode_service_code='''
@@ -283,7 +283,7 @@ class MyWidget(QWidget):
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
 				rootLogger.debug(req.text)
-				time.sleep(0.4)
+				time.sleep(0.25)
 			except Exception as e:
 				rootLogger.critical(e)
 				pass
@@ -334,7 +334,7 @@ class MyWidget(QWidget):
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
 				rootLogger.debug(req.text)
-				time.sleep(0.4)
+				time.sleep(0.25)
 			except Exception as e:
 				rootLogger.critical(e)
 				pass
@@ -385,7 +385,7 @@ class MyWidget(QWidget):
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
 				rootLogger.debug(req.text)
-				time.sleep(0.4)
+				time.sleep(0.25)
 			except Exception as e:
 				rootLogger.critical(e)
 				pass
@@ -436,7 +436,7 @@ class MyWidget(QWidget):
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/guestbook_ajax/delete" % userId, data=deleteData, timeout=10)
 				rootLogger.debug(req.text)
-				time.sleep(0.4)
+				time.sleep(0.25)
 			except Exception as e:
 				rootLogger.critical(e)
 				pass
