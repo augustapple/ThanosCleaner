@@ -17,7 +17,7 @@ from bs4 import BeautifulSoup
 loginFlag = False
 exitFlag = False
 deleteFlag = False
-VERSION = "2.0.1"
+VERSION = "2.0.2"
 UPDATE_URL = "https://github.com/augustapple/ThanosCleaner/raw/master/version.json"
 
 decode_service_code='''
@@ -265,6 +265,7 @@ class MyWidget(QWidget):
 				req = SESS.get("https://gallog.dcinside.com/%s/posting" % userId)
 				soup = BeautifulSoup(req.text,"lxml")
 				content_form = soup.select("ul.cont_listbox > li")
+				ci_t = SESS.cookies.get_dict()['ci_c']
 
 				if not content_form:
 					rootLogger.info("All posts are deleted successfully")
@@ -278,6 +279,7 @@ class MyWidget(QWidget):
 				dataNo = content_form[0]["data-no"]
 				del content_form[0]
 				deleteData = {
+					"ci_t" : ci_t,
 					"no" : dataNo,
 					"service_code" : service_code
 				}
@@ -316,6 +318,7 @@ class MyWidget(QWidget):
 				req = SESS.get("https://gallog.dcinside.com/%s/comment" % userId)
 				soup = BeautifulSoup(req.text,"lxml")
 				content_form = soup.select("ul.cont_listbox > li")
+				ci_t = SESS.cookies.get_dict()['ci_c']
 
 				if not content_form:
 					rootLogger.info("All comments are deleted successfully")
@@ -329,6 +332,7 @@ class MyWidget(QWidget):
 				dataNo = content_form[0]["data-no"]
 				del content_form[0]
 				deleteData = {
+					"ci_t" : ci_t,
 					"no" : dataNo,
 					"service_code" : service_code
 				}
@@ -367,6 +371,7 @@ class MyWidget(QWidget):
 				req = SESS.get("https://gallog.dcinside.com/%s/scrap" % userId)
 				soup = BeautifulSoup(req.text,"lxml")
 				content_form = soup.select("ul.cont_listbox > li")
+				ci_t = SESS.cookies.get_dict()['ci_c']
 
 				if not content_form:
 					rootLogger.info("All scraps are deleted successfully")
@@ -380,6 +385,7 @@ class MyWidget(QWidget):
 				dataNo = content_form[0]["data-no"]
 				del content_form[0]
 				deleteData = {
+					"ci_t" : ci_t,
 					"no" : dataNo,
 					"service_code" : service_code
 				}
@@ -419,6 +425,7 @@ class MyWidget(QWidget):
 				req = SESS.get("https://gallog.dcinside.com/%s/guestbook" % userId)
 				soup = BeautifulSoup(req.text,"lxml")
 				content_form = soup.select("ul.cont_listbox > li")
+				ci_t = SESS.cookies.get_dict()['ci_c']
 
 				if not content_form:
 					rootLogger.info("All guestbooks are deleted successfully")
@@ -432,6 +439,7 @@ class MyWidget(QWidget):
 				dataNo = content_form[0]["data-headnum"]
 				del content_form[0]
 				deleteData = {
+					"ci_t" : ci_t,
 					"headnum" : dataNo
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/guestbook_ajax/delete" % userId, data=deleteData, timeout=10)
@@ -485,7 +493,7 @@ class MyWidget(QWidget):
 
 		global service_code
 		service_code = decode_service_code(service_code_origin, r_value)
-		rootLogger.info("Service code has created")
+		rootLogger.info("Service code has created: %s" % service_code)
 
 	def buttonDisable(self):
 		self.btn_delPost.setEnabled(False)
