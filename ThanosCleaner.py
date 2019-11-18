@@ -58,27 +58,40 @@ def checkUpdate():
 	try:
 		msg = QMessageBox()
 		msg.setWindowIcon(QIcon("./dependencies/image/update.ico"))
+		GIT_RELEASE_URL = "https://github.com/augustapple/ThanosCleaner/releases/tag/v%s" % LATEST_VERSION
 		rootLogger.info("Checking if new version is available..")
-		if version.parse(CUR_VERSION) < version.parse(LATEST_VERSION):
-			rootLogger.info("New version (%s) is available!" % LATEST_VERSION)
-			GIT_RELEASE_URL = "https://github.com/augustapple/ThanosCleaner/releases/tag/v%s" % LATEST_VERSION
-			msg.setWindowTitle("업데이트 발견")
-			msg.setText("업데이트가 발견되었습니다!<br>현재 버전 : %s<br>최신 버전 : %s" % (CUR_VERSION, LATEST_VERSION))
-			msg.addButton(QPushButton("Update"), QMessageBox.YesRole)
-			msg.setStandardButtons(QMessageBox.Cancel)
-			update = msg.exec_()
-			if update == QMessageBox.Cancel:
-				rootLogger.info("Update is available but canceled by user")
+		if sys.platform == "win32": #if OS is windows
+			if version.parse(CUR_VERSION) < version.parse(LATEST_VERSION):
+				rootLogger.info("New version (%s) is available!" % LATEST_VERSION)
+				msg.setWindowTitle("업데이트 발견")
+				msg.setText("업데이트가 발견되었습니다!<br>현재 버전 : %s<br>최신 버전 : %s" % (CUR_VERSION, LATEST_VERSION))
+				msg.addButton(QPushButton("Update"), QMessageBox.YesRole)
+				msg.setStandardButtons(QMessageBox.Cancel)
+				update = msg.exec_()
+				if update == QMessageBox.Cancel:
+					rootLogger.info("Update is available but canceled by user")
+				else:
+					rootLogger.info("Update started")
+					threading.Thread(target=startUpdate).start()
+					updateFlag = True
 			else:
-				rootLogger.info("Update started")
-				threading.Thread(target=startUpdate).start()
-				updateFlag = True
-		else:
-			rootLogger.info("No updates available.")
-			msg.setWindowTitle("업데이트 없음")
-			msg.setText("업데이트가 발견되지 않았습니다")
-			msg.setStandardButtons(QMessageBox.Yes)
-			msg.exec_()
+				rootLogger.info("No updates available.")
+				msg.setWindowTitle("업데이트 없음")
+				msg.setText("업데이트가 발견되지 않았습니다<br>현재 버전 : %s" % CUR_VERSION)
+				msg.setStandardButtons(QMessageBox.Yes)
+				msg.exec_()
+		else: #if OS is not windows
+			if version.parse(CUR_VERSION) < version.parse(LATEST_VERSION):
+				rootLogger.info("New version (%s) is available!" % LATEST_VERSION)
+				msg.setWindowTitle("업데이트 발견")
+				msg.setText("업데이트가 발견되었습니다!<br>현재 버전 : %s<br>최신 버전 : <a href='%s'>%s</a>" % (CUR_VERSION, GIT_RELEASE_URL, LATEST_VERSION))
+				msg.exec_()
+			else:
+				rootLogger.info("No updates available.")
+				msg.setWindowTitle("업데이트 없음")
+				msg.setText("업데이트가 발견되지 않았습니다<br>현재 버전 : %s" % CUR_VERSION)
+				msg.setStandardButtons(QMessageBox.Yes)
+				msg.exec_()
 
 	except Exception as e:
 		rootLogger.critical(e)
@@ -87,10 +100,10 @@ def checkUpdate():
 def startUpdate():
 	global CUR_VERSION, LATEST_VERSION
 	try:
-		rootLogger.info("v%s download started..." % CUR_VERSION)
-		DOWNLOAD_URL = "https://github.com/augustapple/ThanosCleaner/releases/download/v%s/ThanosCleaner.zip" % CUR_VERSION
+		rootLogger.info("v%s download started..." % LATEST_VERSION)
+		DOWNLOAD_URL = "https://github.com/augustapple/ThanosCleaner/releases/download/v%s/ThanosCleaner.zip" % LATEST_VERSION
 		fileBin = requests.get(DOWNLOAD_URL)
-		rootLogger.info("v%s download complete" % CUR_VERSION)
+		rootLogger.info("v%s download complete" % LATEST_VERSION)
 
 		if not os.path.exists("C:/Temp"):
 			os.makedirs("C:/Temp")
