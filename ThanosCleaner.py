@@ -8,8 +8,11 @@ import sys
 import time
 import js2py
 import ctypes
+import zipfile
 import requests
 import threading
+import webbrowser
+import subprocess
 import logging
 import logging.handlers
 from bs4 import BeautifulSoup
@@ -17,8 +20,9 @@ from bs4 import BeautifulSoup
 loginFlag = False
 exitFlag = False
 deleteFlag = False
-VERSION = "2.0.2"
-UPDATE_URL = "https://github.com/augustapple/ThanosCleaner/raw/master/version.json"
+updateFlag = False
+CUR_VERSION = "2.0.1"
+LATEST_VERSION = requests.get(url="https://github.com/augustapple/ThanosCleaner/raw/master/version.json").json()['version']
 
 decode_service_code='''
     function get_service_code(service_code, r_value){
@@ -50,17 +54,63 @@ decode_service_code='''
 decode_service_code = js2py.eval_js(decode_service_code)
 
 def checkUpdate():
-	global VERSION, UPDATE_URL
-	rootLogger.info("Checking if new version is available..")
+	global CUR_VERSION, LATEST_VERSION, updateFlag
 	try:
-		data = requests.get(url=UPDATE_URL).json()
-		if version.parse(VERSION) < version.parse(data['version']):
-			rootLogger.info("New version %s is available!" % data['version'])
-			GIT_RELEASE_URL = "https://github.com/augustapple/ThanosCleaner/releases/%s" % data['version']
-			QMessageBox.information(None, "업데이트 발견", "업데이트가 발견되었습니다!<br>다운로드: <a href='%s'>ThanosCleaner %s</a>" % (GIT_RELEASE_URL, data['version']), QMessageBox.Yes)
+		msg = QMessageBox()
+		msg.setWindowIcon(QIcon("./dependencies/image/update.ico"))
+		rootLogger.info("Checking if new version is available..")
+		if version.parse(CUR_VERSION) < version.parse(LATEST_VERSION):
+			rootLogger.info("New version (%s) is available!" % LATEST_VERSION)
+			GIT_RELEASE_URL = "https://github.com/augustapple/ThanosCleaner/releases/tag/v%s" % LATEST_VERSION
+			msg.setWindowTitle("업데이트 발견")
+			msg.setText("업데이트가 발견되었습니다!<br>현재 버전 : %s<br>최신 버전 : %s" % (CUR_VERSION, LATEST_VERSION))
+			msg.addButton(QPushButton("Update"), QMessageBox.YesRole)
+			msg.setStandardButtons(QMessageBox.Cancel)
+			update = msg.exec_()
+			if update == QMessageBox.Cancel:
+				rootLogger.info("Update is available but canceled by user")
+			else:
+				rootLogger.info("Update started")
+				threading.Thread(target=startUpdate).start()
+				updateFlag = True
 		else:
 			rootLogger.info("No updates available.")
-			QMessageBox.information(None, "최신 버전입니다", "업데이트가 발견되지 않았습니다.", QMessageBox.Yes)
+			msg.setWindowTitle("업데이트 없음")
+			msg.setText("업데이트가 발견되지 않았습니다")
+			msg.setStandardButtons(QMessageBox.Yes)
+			msg.exec_()
+
+	except Exception as e:
+		rootLogger.critical(e)
+		pass
+
+def startUpdate():
+	global CUR_VERSION, LATEST_VERSION
+	try:
+		rootLogger.info("v%s download started..." % CUR_VERSION)
+		DOWNLOAD_URL = "https://github.com/augustapple/ThanosCleaner/releases/download/v%s/ThanosCleaner.zip" % CUR_VERSION
+		fileBin = requests.get(DOWNLOAD_URL)
+		rootLogger.info("v%s download complete" % CUR_VERSION)
+
+		if not os.path.exists("C:/Temp"):
+			os.makedirs("C:/Temp")
+			rootLogger.info("Temp directory has created")
+		else:
+			rootLogger.info("Temp directory has already exist")
+
+		with open("C:/Temp/ThanosCleaner.zip", "wb") as f:
+			f.write(fileBin.content)
+			rootLogger.info("Successfully Wrote downloaded binary to file")
+
+		newVersionZip = zipfile.ZipFile("C:/Temp/ThanosCleaner.zip")
+		newVersionZip.extract("ThanosCleaner.exe", "C:/Temp/")
+		rootLogger.info("Extract complete")
+		subprocess.Popen("update.bat")
+		rootLogger.info("update.bat has executed")
+		global exitFlag
+		exitFlag = True
+		QCoreApplication.instance().quit()
+
 	except Exception as e:
 		rootLogger.critical(e)
 		pass
@@ -568,7 +618,9 @@ class DCleanerGUI(QMainWindow):
 			self.setFixedSize(300 * scalingSize, 400 * scalingSize)
 			self.setStyleSheet("font-size: %dpx;" % (12 * scalingSize))
 		
-		self.show()
+		global updateFlag
+		if not updateFlag:
+			self.show()
 
 	def showProgInfo(self):
 		infoBox = QMessageBox()
@@ -621,7 +673,6 @@ if isUserAdmin():
 		rootLogger.addHandler(streamHandler)
 		app = QApplication(sys.argv)
 		main = DCleanerGUI()
-		main.show()
 		sys.exit(app.exec_())
 else:
 	ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
