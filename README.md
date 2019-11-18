@@ -1,5 +1,7 @@
 # ThanosCleaner (디시클리너)
 
+현재 ThanosCleaner는 디시의 삭제 과정 reCAPTCHA 도입으로 사용이 불가능한 상태입니다. (2019/11/19 기준)
+
 ## ThanosCleaner란?
 한 번의 핑거 스냅으로 우주의 절반을 소멸시킨 타노스를 본받아 한 번의 클릭으로
 
