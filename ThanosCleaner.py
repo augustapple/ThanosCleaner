@@ -21,7 +21,8 @@ loginFlag = False
 exitFlag = False
 deleteFlag = False
 updateFlag = False
-CUR_VERSION = "2.1.0"
+sleepTime = 0.33
+CUR_VERSION = "2.1.1"
 LATEST_VERSION = requests.get(url="https://github.com/augustapple/ThanosCleaner/raw/master/version.json").json()['version']
 
 decode_service_code='''
@@ -144,6 +145,8 @@ class MyWidget(QWidget):
 		self.cbx_pw = QCheckBox("비밀번호 숨김", self)
 		self.cbx_pw.stateChanged.connect(self.hidePassword)
 		self.cbx_pw.toggle()
+		self.cbx_sm = QCheckBox("슬로우 모드", self)
+		self.cbx_sm.stateChanged.connect(self.slowMode)
 		self.btn_login = QPushButton("로그인", self)
 		self.btn_login.clicked.connect(self.tryLogin)
 		self.btn_login.setStatusTip("로그인하기")
@@ -179,6 +182,7 @@ class MyWidget(QWidget):
 		layout.addWidget(self.qle_id, 1, 2)
 		layout.addWidget(self.qle_pw, 2, 2)
 		layout.addWidget(self.cbx_pw, 3, 2)
+		layout.addWidget(self.cbx_sm, 3, 3)
 		layout.addWidget(self.btn_login, 1, 3)
 		layout.addWidget(self.btn_logout, 2, 3)
 		layout.addWidget(self.lbl_status, 6, 2, 1, 3)
@@ -198,11 +202,20 @@ class MyWidget(QWidget):
 		if state == Qt.Checked:
 			self.qle_pw.setEchoMode(QLineEdit.Password)
 			self.cbx_pw.setStatusTip("비밀번호 보이기")
-			rootLogger.debug("Hide password is enabled")
+			rootLogger.info("Hide password is enabled")
 		else:
 			self.qle_pw.setEchoMode(QLineEdit.Normal)
 			self.cbx_pw.setStatusTip("비밀번호 숨기기")
-			rootLogger.debug("Hide password is disabled")
+			rootLogger.info("Hide password is disabled")
+	
+	def slowMode(self, state):
+		global sleepTime
+		if state == Qt.Checked:
+			sleepTime = 1
+			rootLogger.info("Slowmode is enabled")
+		else:
+			sleepTime = 0.33
+			rootLogger.info("Slowmode is disabled")
 
 	def logout(self):
 		global SESS, loginFlag, deleteFlag
@@ -319,7 +332,7 @@ class MyWidget(QWidget):
 			pass
 
 	def delPost(self, SESS, userId, service_code):
-		global exitFlag, loginFlag, deleteFlag
+		global exitFlag, loginFlag, deleteFlag, sleepTime
 		deleteFlag = True
 		while exitFlag == False and deleteFlag == True:
 			try:
@@ -348,7 +361,7 @@ class MyWidget(QWidget):
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
 				rootLogger.debug(req.text)
-				time.sleep(0.25)
+				time.sleep(sleepTime)
 			except Exception as e:
 				rootLogger.critical(e)
 				pass
@@ -372,7 +385,7 @@ class MyWidget(QWidget):
 			pass
 
 	def delComment(self, SESS, userId, service_code):
-		global exitFlag, loginFlag, deleteFlag
+		global exitFlag, loginFlag, deleteFlag, sleepTime
 		deleteFlag = True
 		while exitFlag == False and deleteFlag == True:
 			try:
@@ -401,7 +414,7 @@ class MyWidget(QWidget):
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
 				rootLogger.debug(req.text)
-				time.sleep(0.25)
+				time.sleep(sleepTime)
 			except Exception as e:
 				rootLogger.critical(e)
 				pass
@@ -425,7 +438,7 @@ class MyWidget(QWidget):
 			pass
 
 	def delScrap(self, SESS, userId, service_code):
-		global exitFlag, loginFlag, deleteFlag
+		global exitFlag, loginFlag, deleteFlag, sleepTime
 		deleteFlag = True
 		while exitFlag == False and deleteFlag == True:
 			try:
@@ -454,7 +467,7 @@ class MyWidget(QWidget):
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
 				rootLogger.debug(req.text)
-				time.sleep(0.25)
+				time.sleep(sleepTime)
 			except Exception as e:
 				rootLogger.critical(e)
 				pass
@@ -479,7 +492,7 @@ class MyWidget(QWidget):
 			pass
 
 	def delGuestbook(self, SESS, userId):
-		global exitFlag, loginFlag, deleteFlag
+		global exitFlag, loginFlag, deleteFlag, sleepTime
 		deleteFlag = True
 		while exitFlag == False and deleteFlag == True:
 			try:
@@ -507,7 +520,7 @@ class MyWidget(QWidget):
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/guestbook_ajax/delete" % userId, data=deleteData, timeout=10)
 				rootLogger.debug(req.text)
-				time.sleep(0.25)
+				time.sleep(sleepTime)
 			except Exception as e:
 				rootLogger.critical(e)
 				pass
