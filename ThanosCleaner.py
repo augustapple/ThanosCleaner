@@ -211,7 +211,7 @@ class MyWidget(QWidget):
 	def slowMode(self, state):
 		global sleepTime
 		if state == Qt.Checked:
-			sleepTime = 1
+			sleepTime = 1.65
 			rootLogger.info("Slowmode is enabled")
 		else:
 			sleepTime = 0.33
