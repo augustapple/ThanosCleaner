@@ -670,7 +670,7 @@ class MyWidget(QWidget):
 			except IndexError:
 				postNum = 0
 				pass
-			self.postNum = int(postNum)
+			self.postNum = int(postNum.replace(",", ""))
 		except Exception as e:
 			rootLogger.critical(e)
 			pass
@@ -692,7 +692,7 @@ class MyWidget(QWidget):
 			except IndexError:
 				commentNum = 0
 				pass
-			self.commentNum = int(commentNum)
+			self.commentNum = int(commentNum.replace(",", ""))
 		except Exception as e:
 			rootLogger.critical(e)
 			pass
@@ -704,8 +704,8 @@ class MyWidget(QWidget):
 			req = SESS.get(url)
 			soup = BeautifulSoup(req.text, "lxml")
 			etcList.append(soup.find("div", class_="galler_info").text.split("(")[0].replace("\n", ""))
-			etcList.append(int(soup.find_all("h2", class_="tit")[2].find("span", class_="num").text.replace("(", "").replace(")", "")))
-			etcList.append(int(soup.find_all("h2", class_="tit")[3].find("span", class_="num").text.replace("(", "").replace(")", "")))
+			etcList.append(int(soup.find_all("h2", class_="tit")[2].find("span", class_="num").text.replace("(", "").replace(")", "").replace(",", "")))
+			etcList.append(int(soup.find_all("h2", class_="tit")[3].find("span", class_="num").text.replace("(", "").replace(")", "").replace(",", "")))
 			self.etcList = etcList
 		except Exception as e:
 			rootLogger.critical(e)
