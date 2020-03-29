@@ -34,13 +34,13 @@ pyinstaller -F -w --icon="dependencies/image/Thanos.ico" ThanosCleaner.py
 
 프로그램을 실행하면 아래와 같은 화면이 나옵니다.
 
-![UI](https://user-images.githubusercontent.com/27128153/68472671-4ffa2480-0264-11ea-9039-c884f297fab9.png)
+![UI](https://user-images.githubusercontent.com/57178921/77852076-9d792d00-7217-11ea-8940-937da022be92.png)
 
 해당 화면에 아이디와 비밀번호를 입력하고 엔터 혹은 로그인 버튼을 눌러 로그인을 합니다.
 
 아래와 같이 로그인이 완료되었을 경우, 게시글/댓글/스크랩/방명록 삭제 버튼을 눌러 삭제를 시작합니다.
 
-![loginUI](https://user-images.githubusercontent.com/27128153/68472670-4e306100-0264-11ea-8b04-07c5a3f9d457.png)
+![loginUI](https://user-images.githubusercontent.com/57178921/77852078-9e11c380-7217-11ea-9dfb-1e0f61b769df.png)
 
 로그아웃은 언제든 가능하며, 삭제가 진행중일 경우 로그아웃을 하기 전 유저에게 확인을 묻습니다.
 
