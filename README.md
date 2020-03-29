@@ -1,4 +1,4 @@
-# [**다운로드**](https://github.com/augustapple/ThanosCleaner/releases/tag/v3.0.0)
+# [**다운로드**](https://github.com/augustapple/ThanosCleaner/releases/download/v3.0.0/ThanosCleaner.zip)
 
 # 디시 패치 관련 공지
 
