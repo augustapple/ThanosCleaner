@@ -6,6 +6,7 @@ import os
 import re
 import sys
 import time
+import math
 import js2py
 import ctypes
 import zipfile
@@ -22,7 +23,7 @@ exitFlag = False
 deleteFlag = False
 updateFlag = False
 sleepTime = 0.33
-CUR_VERSION = "2.1.1"
+CUR_VERSION = "3.0.0"
 LATEST_VERSION = requests.get(url="https://github.com/augustapple/ThanosCleaner/raw/master/version.json").json()['version']
 
 decode_service_code='''
@@ -58,7 +59,7 @@ def checkUpdate():
 	global CUR_VERSION, LATEST_VERSION, updateFlag
 	try:
 		msg = QMessageBox()
-		msg.setWindowIcon(QIcon("./dependencies/image/update.ico"))
+		msg.setWindowIcon(QIcon(resourcePath("dependencies/image/update.ico")))
 		GIT_RELEASE_URL = "https://github.com/augustapple/ThanosCleaner/releases/tag/v%s" % LATEST_VERSION
 		rootLogger.info("Checking if new version is available..")
 		if sys.platform == "win32": #if OS is windows
@@ -77,8 +78,9 @@ def checkUpdate():
 					updateFlag = True
 			else:
 				rootLogger.info("No updates available.")
+				msg.setStyleSheet("QLabel{min-width: 150px;}")
 				msg.setWindowTitle("업데이트 없음")
-				msg.setText("업데이트가 발견되지 않았습니다<br>현재 버전 : %s" % CUR_VERSION)
+				msg.setText("최신 버전입니다<br>현재 버전 : %s" % CUR_VERSION)
 				msg.setStandardButtons(QMessageBox.Yes)
 				msg.exec_()
 		else: #if OS is not windows
@@ -89,6 +91,7 @@ def checkUpdate():
 				msg.exec_()
 			else:
 				rootLogger.info("No updates available.")
+				msg.setStyleSheet("QLabel{min-width: 150px;}")
 				msg.setWindowTitle("업데이트 없음")
 				msg.setText("업데이트가 발견되지 않았습니다<br>현재 버전 : %s" % CUR_VERSION)
 				msg.setStandardButtons(QMessageBox.Yes)
@@ -119,7 +122,7 @@ def startUpdate():
 		newVersionZip = zipfile.ZipFile("C:/Temp/ThanosCleaner.zip")
 		newVersionZip.extract("ThanosCleaner.exe", "C:/Temp/")
 		rootLogger.info("Extract complete")
-		subprocess.Popen("update.bat")
+		subprocess.Popen(resourcePath("dependencies/update.bat"))
 		rootLogger.info("update.bat has executed")
 		global exitFlag
 		exitFlag = True
@@ -132,71 +135,103 @@ def startUpdate():
 class MyWidget(QWidget):
 	def __init__(self):
 		super().__init__()
-		rootLogger.debug("Application started")
+		try:
+			rootLogger.debug("Application started")
 
-		layout = QGridLayout()
+			layout = QVBoxLayout()
+			loginGroupBox = QGroupBox("로그인")
+			gallGroupBox = QGroupBox("갤러리별 삭제")
+			accountGroupBox = QGroupBox("계정별 삭제")
 
-		self.qle_id = QLineEdit(self)
-		self.qle_id.setPlaceholderText("아이디")
-		self.qle_id.returnPressed.connect(self.tryLogin)
-		self.qle_pw = QLineEdit(self)
-		self.qle_pw.setPlaceholderText("비밀번호")
-		self.qle_pw.returnPressed.connect(self.tryLogin)
-		self.cbx_pw = QCheckBox("비밀번호 숨김", self)
-		self.cbx_pw.stateChanged.connect(self.hidePassword)
-		self.cbx_pw.toggle()
-		self.cbx_sm = QCheckBox("슬로우 모드", self)
-		self.cbx_sm.stateChanged.connect(self.slowMode)
-		self.btn_login = QPushButton("로그인", self)
-		self.btn_login.clicked.connect(self.tryLogin)
-		self.btn_login.setStatusTip("로그인하기")
-		self.btn_logout = QPushButton("로그아웃", self)
-		self.btn_logout.setEnabled(False)
-		self.btn_logout.clicked.connect(self.logout)
-		self.btn_logout.setStatusTip("로그아웃하기")
-		self.status = "로그인되지 않음"
-		self.lbl_status = QLabel("로그인 상태 : %s" % self.status, self)
-		self.lbl_post = QLabel("게시글 수 : 알 수 없음")
-		self.lbl_comment = QLabel("댓글 수 : 알 수 없음")
-		self.lbl_scrap = QLabel("스크랩 수 : 알 수 없음")
-		self.lbl_guestbook = QLabel("방명록 수 : 알 수 없음")
-		self.btn_delPost = QPushButton("게시글 삭제", self)
-		self.btn_delPost.clicked.connect(self.tryDelPost)
-		self.btn_delPost.setStatusTip("모든 게시글 삭제")
-		self.btn_delComment = QPushButton("댓글 삭제", self)
-		self.btn_delComment.clicked.connect(self.tryDelComment)
-		self.btn_delComment.setStatusTip("모든 댓글 삭제")
-		self.btn_delScrap = QPushButton("스크랩 삭제", self)
-		self.btn_delScrap.clicked.connect(self.tryDelScrap)
-		self.btn_delScrap.setStatusTip("모든 스크랩 삭제")
-		self.btn_delGuestbook = QPushButton("방명록 삭제", self)
-		self.btn_delGuestbook.clicked.connect(self.tryDelGuestbook)
-		self.btn_delGuestbook.setStatusTip("모든 방명록 삭제")
-		self.btn_cancelDelProcess = QPushButton("삭제 중단", self)
-		self.btn_cancelDelProcess.setEnabled(False)
-		self.btn_cancelDelProcess.clicked.connect(self.cancelDelProcess)
-		self.btn_cancelDelProcess.setStatusTip("진행 중인 삭제 작업 중단")
+			self.qle_id = QLineEdit(self)
+			self.qle_id.setPlaceholderText("아이디")
+			self.qle_id.returnPressed.connect(self.tryLogin)
+			self.qle_pw = QLineEdit(self)
+			self.qle_pw.setPlaceholderText("비밀번호")
+			self.qle_pw.returnPressed.connect(self.tryLogin)
+			self.cbx_pw = QCheckBox("비밀번호 숨김", self)
+			self.cbx_pw.stateChanged.connect(self.hidePassword)
+			self.cbx_pw.toggle()
+			self.cbx_sm = QCheckBox("슬로우 모드", self)
+			self.cbx_sm.stateChanged.connect(self.slowMode)
+			self.btn_login = QPushButton("로그인", self)
+			self.btn_login.clicked.connect(self.tryLogin)
+			self.btn_login.setStatusTip("로그인하기")
+			self.btn_logout = QPushButton("로그아웃", self)
+			self.btn_logout.setEnabled(False)
+			self.btn_logout.clicked.connect(self.logout)
+			self.btn_logout.setStatusTip("로그아웃하기")
+			self.status = "로그인되지 않음"
+			self.lbl_status = QLabel("로그인 상태 : %s" % self.status, self)
+			loginGbxLayout = QGridLayout()
+			loginGroupBox.setLayout(loginGbxLayout)
+			loginGbxLayout.addWidget(self.qle_id, 1, 2)
+			loginGbxLayout.addWidget(self.qle_pw, 2, 2)
+			loginGbxLayout.addWidget(self.cbx_pw, 3, 2)
+			loginGbxLayout.addWidget(self.cbx_sm, 3, 3)
+			loginGbxLayout.addWidget(self.btn_login, 1, 3)
+			loginGbxLayout.addWidget(self.btn_logout, 2, 3)
+			loginGbxLayout.addWidget(self.lbl_status, 6, 2, 1, 3)
+			layout.addWidget(loginGroupBox)
 
-		self.setLayout(layout)
+			self.cmb_sort = QComboBox(self)
+			self.cmb_sort.addItem("최신순")
+			self.cmb_sort.addItem("옛날순")
+			middleLayout = QHBoxLayout()
+			middleLayout.addWidget(self.cmb_sort)
+			layout.addLayout(middleLayout)
+			
+			self.cmb_gall = QComboBox(self)
+			self.cmb_gall.setEnabled(False)
+			self.lbl_post = QLabel("게시글 수 : 알 수 없음")
+			self.btn_delPost = QPushButton("게시글 삭제", self)
+			self.btn_delPost.clicked.connect(self.tryDelPost)
+			self.btn_delPost.setStatusTip("모든 게시글 삭제")
+			self.lbl_comment = QLabel("댓글 수 : 알 수 없음")
+			self.btn_delComment = QPushButton("댓글 삭제", self)
+			self.btn_delComment.clicked.connect(self.tryDelComment)
+			self.btn_delComment.setStatusTip("모든 댓글 삭제")
+			gallGbxLayout = QGridLayout()
+			gallGroupBox.setLayout(gallGbxLayout)
+			gallGbxLayout.addWidget(self.cmb_gall, 1, 1, 1, 2)
+			gallGbxLayout.addWidget(self.lbl_post, 2, 1)
+			gallGbxLayout.addWidget(self.btn_delPost, 2, 2)
+			gallGbxLayout.addWidget(self.lbl_comment, 3, 1)
+			gallGbxLayout.addWidget(self.btn_delComment, 3, 2)
+			layout.addWidget(gallGroupBox)
 
-		layout.addWidget(self.qle_id, 1, 2)
-		layout.addWidget(self.qle_pw, 2, 2)
-		layout.addWidget(self.cbx_pw, 3, 2)
-		layout.addWidget(self.cbx_sm, 3, 3)
-		layout.addWidget(self.btn_login, 1, 3)
-		layout.addWidget(self.btn_logout, 2, 3)
-		layout.addWidget(self.lbl_status, 6, 2, 1, 3)
-		layout.addWidget(self.lbl_post, 7, 2)
-		layout.addWidget(self.lbl_comment, 8, 2)
-		layout.addWidget(self.lbl_scrap, 9, 2)
-		layout.addWidget(self.lbl_guestbook, 10, 2)
-		layout.addWidget(self.btn_delPost, 11, 2, 1, 3)
-		layout.addWidget(self.btn_delComment, 12, 2, 1, 3)
-		layout.addWidget(self.btn_delScrap, 13, 2, 1, 3)
-		layout.addWidget(self.btn_delGuestbook, 14, 2, 1, 3)
-		layout.addWidget(self.btn_cancelDelProcess, 15, 2, 1, 3)
-		rootLogger.debug("Application initialized successfully")
-		checkUpdate()
+			self.lbl_scrap = QLabel("스크랩 수 : 알 수 없음")
+			self.btn_delScrap = QPushButton("스크랩 삭제", self)
+			self.btn_delScrap.clicked.connect(self.tryDelScrap)
+			self.btn_delScrap.setStatusTip("모든 스크랩 삭제")
+			self.lbl_guestbook = QLabel("방명록 수 : 알 수 없음")
+			self.btn_delGuestbook = QPushButton("방명록 삭제", self)
+			self.btn_delGuestbook.clicked.connect(self.tryDelGuestbook)
+			self.btn_delGuestbook.setStatusTip("모든 방명록 삭제")
+			accountGbxLayout = QGridLayout()
+			accountGroupBox.setLayout(accountGbxLayout)
+			accountGbxLayout.addWidget(self.lbl_scrap, 1, 1)
+			accountGbxLayout.addWidget(self.btn_delScrap, 1, 2)
+			accountGbxLayout.addWidget(self.lbl_guestbook, 2, 1)
+			accountGbxLayout.addWidget(self.btn_delGuestbook, 2, 2)
+			layout.addWidget(accountGroupBox)
+
+			self.btn_cancelDelProcess = QPushButton("삭제 중단", self)
+			self.btn_cancelDelProcess.setEnabled(False)
+			self.btn_cancelDelProcess.clicked.connect(self.cancelDelProcess)
+			self.btn_cancelDelProcess.setStatusTip("진행 중인 삭제 작업 중단")
+			bottomLayout = QHBoxLayout()
+			bottomLayout.addWidget(self.btn_cancelDelProcess)
+			layout.addLayout(bottomLayout)
+
+			self.setLayout(layout)
+
+			rootLogger.debug("Application initialized successfully")
+			checkUpdate()
+		except Exception as e:
+			rootLogger.critical(e)
+			pass
+
 
 	def hidePassword(self, state):
 		if state == Qt.Checked:
@@ -233,6 +268,8 @@ class MyWidget(QWidget):
 				self.qle_pw.setEnabled(True)
 				self.qle_pw.setText("")
 				self.buttonEnable()
+				self.cmb_gall.clear()
+				self.cmb_gall.setEnabled(False)
 				rootLogger.info("Logged out")
 		else:
 			loginFlag = False
@@ -245,6 +282,8 @@ class MyWidget(QWidget):
 			self.qle_pw.setEnabled(True)
 			self.qle_pw.setText("")
 			self.buttonEnable()
+			self.cmb_gall.clear()
+			self.cmb_gall.setEnabled(False)
 			deleteFlag = False
 			rootLogger.info("Logged out")
 
@@ -268,8 +307,7 @@ class MyWidget(QWidget):
 				self.btn_login.setText("로그인 완료")
 				self.qle_id.setEnabled(False)
 				self.qle_pw.setEnabled(False)
-				gangsinThr = (threading.Thread(target=self.gangsin, args=(SESS, self.userId)))
-				gangsinThr.start()
+				gangsinThr = (threading.Thread(target=self.gangsin, args=(SESS, self.userId))).start()
 				rootLogger.info("Logged in as %s" % self.userId)
 
 	def login(self, userId, userPw):
@@ -311,7 +349,32 @@ class MyWidget(QWidget):
 		else:
 			rootLogger.info("Login session created successfully")
 			SESS = session
+			self.cmb_gall.addItem("전체 갤러리")
+			self.getGalleryList(SESS, userId)
 			return SESS
+
+	def getGalleryList(self, SESS, userId):
+		try:
+			req = SESS.get("https://gallog.dcinside.com/%s/posting" % userId)
+			soup = BeautifulSoup(req.text, "lxml")
+			postGallList = soup.select("ul.option_box > li")
+			req = SESS.get("https://gallog.dcinside.com/%s/comment" % userId)
+			soup = BeautifulSoup(req.text, "lxml")
+			commentGallList = soup.select("ul.option_box > li")
+			self.gallDict = {}
+			for i in postGallList:
+				self.gallDict[i.text] = [i.get("data-value"), i.get("onclick").replace("posting", "type").replace("comment", "type")]
+			for i in commentGallList:
+				self.gallDict[i.text] = [i.get("data-value"), i.get("onclick").replace("posting", "type").replace("comment", "type")]
+			del self.gallDict["전체보기"]
+			rootLogger.info("User's gallery list created successfully")
+			gallNameList = self.gallDict.keys()
+			for i in gallNameList:
+				self.cmb_gall.addItem("%s" % i)
+			self.cmb_gall.setEnabled(True)
+		except Exception as e:
+			rootLogger.critical(e)
+			pass
 
 	def tryDelPost(self):
 		try:
@@ -338,8 +401,18 @@ class MyWidget(QWidget):
 			try:
 				if not loginFlag:
 					break
-				req = SESS.get("https://gallog.dcinside.com/%s/posting" % userId)
-				soup = BeautifulSoup(req.text,"lxml")
+				if self.cmb_sort.currentText() == "최신순":
+					pageNum = 1
+					btnIndex = 0
+				else:
+					pageNum = math.ceil(int(self.lbl_post.text().split(" ")[-1]) / 20)
+					btnIndex = -1
+				if self.cmb_gall.currentText() == "전체 갤러리":
+					req = SESS.get("https://gallog.dcinside.com/%s/posting?p=%d" % (userId, pageNum))
+				else:
+					url = "https://gallog.dcinside.com" + self.gallDict[self.cmb_gall.currentText()][1].replace("type", "posting").replace("location.href='", "")[:-1] + "&p=%d" % pageNum
+					req = SESS.get(url)
+				soup = BeautifulSoup(req.text, "lxml")
 				content_form = soup.select("ul.cont_listbox > li")
 				ci_t = SESS.cookies.get_dict()['ci_c']
 
@@ -352,8 +425,8 @@ class MyWidget(QWidget):
 				else:
 					pass
 
-				dataNo = content_form[0]["data-no"]
-				del content_form[0]
+				dataNo = content_form[btnIndex]["data-no"]
+				del content_form[btnIndex]
 				deleteData = {
 					"ci_t" : ci_t,
 					"no" : dataNo,
@@ -391,8 +464,18 @@ class MyWidget(QWidget):
 			try:
 				if not loginFlag:
 					break
-				req = SESS.get("https://gallog.dcinside.com/%s/comment" % userId)
-				soup = BeautifulSoup(req.text,"lxml")
+				if self.cmb_sort.currentText() == "최신순":
+					pageNum = 1
+					btnIndex = 0
+				else:
+					pageNum = math.ceil(int(self.lbl_comment.text().split(" ")[-1]) / 20)
+					btnIndex = -1
+				if self.cmb_gall.currentText() == "전체 갤러리":
+					req = SESS.get("https://gallog.dcinside.com/%s/comment?p=%d" % (userId, pageNum))
+				else:
+					url = "https://gallog.dcinside.com" + self.gallDict[self.cmb_gall.currentText()][1].replace("type", "comment").replace("location.href='", "")[:-1] + "&p=%d" % pageNum
+					req = SESS.get(url)
+				soup = BeautifulSoup(req.text, "lxml")
 				content_form = soup.select("ul.cont_listbox > li")
 				ci_t = SESS.cookies.get_dict()['ci_c']
 
@@ -405,8 +488,8 @@ class MyWidget(QWidget):
 				else:
 					pass
 
-				dataNo = content_form[0]["data-no"]
-				del content_form[0]
+				dataNo = content_form[btnIndex]["data-no"]
+				del content_form[btnIndex]
 				deleteData = {
 					"ci_t" : ci_t,
 					"no" : dataNo,
@@ -444,8 +527,14 @@ class MyWidget(QWidget):
 			try:
 				if not loginFlag:
 					break
-				req = SESS.get("https://gallog.dcinside.com/%s/scrap" % userId)
-				soup = BeautifulSoup(req.text,"lxml")
+				if self.cmb_sort.currentText() == "최신순":
+					pageNum = 1
+					btnIndex = 0
+				else:
+					pageNum = math.ceil(int(self.lbl_post.text().split(" ")[-1]) / 20)
+					btnIndex = -1
+				req = SESS.get("https://gallog.dcinside.com/%s/scrap?p=%d" % (userId, pageNum))
+				soup = BeautifulSoup(req.text, "lxml")
 				content_form = soup.select("ul.cont_listbox > li")
 				ci_t = SESS.cookies.get_dict()['ci_c']
 
@@ -458,8 +547,8 @@ class MyWidget(QWidget):
 				else:
 					pass
 
-				dataNo = content_form[0]["data-no"]
-				del content_form[0]
+				dataNo = content_form[btnIndex]["data-no"]
+				del content_form[btnIndex]
 				deleteData = {
 					"ci_t" : ci_t,
 					"no" : dataNo,
@@ -498,8 +587,14 @@ class MyWidget(QWidget):
 			try:
 				if not loginFlag:
 					break
-				req = SESS.get("https://gallog.dcinside.com/%s/guestbook" % userId)
-				soup = BeautifulSoup(req.text,"lxml")
+				if self.cmb_sort.currentText() == "최신순":
+					pageNum = 1
+					btnIndex = 0
+				else:
+					pageNum = math.ceil(int(self.lbl_post.text().split(" ")[-1]) / 20)
+					btnIndex = -1
+				req = SESS.get("https://gallog.dcinside.com/%s/guestbook?p=%d" % (userId, pageNum))
+				soup = BeautifulSoup(req.text, "lxml")
 				content_form = soup.select("ul.cont_listbox > li")
 				ci_t = SESS.cookies.get_dict()['ci_c']
 
@@ -512,8 +607,8 @@ class MyWidget(QWidget):
 				else:
 					pass
 
-				dataNo = content_form[0]["data-headnum"]
-				del content_form[0]
+				dataNo = content_form[btnIndex]["data-headnum"]
+				del content_form[btnIndex]
 				deleteData = {
 					"ci_t" : ci_t,
 					"headnum" : dataNo
@@ -528,17 +623,25 @@ class MyWidget(QWidget):
 	def gangsin(self, SESS, userId):
 		rootLogger.debug("Refreshing gallog activities..")
 		global exitFlag, loginFlag
-		while exitFlag == False and loginFlag == True:
-			try:
-				req = SESS.get("https://gallog.dcinside.com/%s" % userId)
-				soup = BeautifulSoup(req.text,"lxml")
-				self.lbl_status.setText("로그인 상태 : %s" % soup.find("div", class_="galler_info").text.split("(")[0].replace("\n", ""))
-				req = SESS.get("https://gallog.dcinside.com/%s" % userId)
-				soup = BeautifulSoup(req.text,"lxml")
-				self.lbl_post.setText("게시글 수 : %s" % soup.find_all("h2", class_="tit")[0].find("span", class_="num").text.replace("(", "").replace(")", ""))
-				self.lbl_comment.setText("댓글 수 : %s" % soup.find_all("h2", class_="tit")[1].find("span", class_="num").text.replace("(", "").replace(")", ""))
-				self.lbl_scrap.setText("스크랩 수 : %s" % soup.find_all("h2", class_="tit")[2].find("span", class_="num").text.replace("(", "").replace(")", ""))
-				self.lbl_guestbook.setText("방명록 수 : %s" % soup.find_all("h2", class_="tit")[3].find("span", class_="num").text.replace("(", "").replace(")", ""))
+		try:
+			self.postNum = 0
+			self.commentNum = 0
+			self.etcList = []
+			while exitFlag == False and loginFlag == True:
+				self.gangsinPostThr = (threading.Thread(target=self.gangsinPost, args=(SESS, userId)))
+				self.gangsinPostThr.start()
+				self.gangsinCommentThr = (threading.Thread(target=self.gangsinComment, args=(SESS, userId)))
+				self.gangsinCommentThr.start()
+				self.gangsinEtcThr = (threading.Thread(target=self.gangsinEtc, args=(SESS, userId)))
+				self.gangsinEtcThr.start()
+				self.gangsinPostThr.join()
+				self.gangsinCommentThr.join()
+				self.gangsinEtcThr.join()
+				self.lbl_status.setText("로그인 상태 : %s" % self.etcList[0])
+				self.lbl_post.setText("게시글 수 : %d" % self.postNum)
+				self.lbl_comment.setText("댓글 수 : %d" % self.commentNum)
+				self.lbl_scrap.setText("스크랩 수 : %d" % self.etcList[1])
+				self.lbl_guestbook.setText("방명록 수 : %d" % self.etcList[2])
 				time.sleep(0.3)
 				if not (exitFlag or loginFlag):
 					self.lbl_status.setText("로그인 상태 : 로그인되지 않음")
@@ -546,13 +649,71 @@ class MyWidget(QWidget):
 					self.lbl_comment.setText("댓글 수 : 알 수 없음")
 					self.lbl_scrap.setText("스크랩 수 : 알 수 없음")
 					self.lbl_guestbook.setText("방명록 수 : 알 수 없음")
-			except Exception as e:
-				rootLogger.critical(e)
+		except Exception as e:
+			rootLogger.critical(e)
+			pass
+
+	def gangsinPost(self, SESS, userId):
+		try:
+			postNum = 0
+			try:
+				if self.cmb_gall.currentText() == "전체 갤러리":
+					url = "https://gallog.dcinside.com/%s" % userId
+					req = SESS.get(url)
+					soup = BeautifulSoup(req.text, "lxml")
+					postNum = soup.find_all("h2", class_="tit")[0].find("span", class_="num").text.replace("(", "").replace(")", "")
+				else:
+					url = "https://gallog.dcinside.com" + self.gallDict[self.cmb_gall.currentText()][1].replace("type", "posting").replace("location.href='", "")[:-1]
+					req = SESS.get(url)
+					soup = BeautifulSoup(req.text, "lxml")
+					postNum = soup.find_all("h2", class_="tit")[0].find("span", class_="num").text.replace("(", "").replace(")", "")
+			except IndexError:
+				postNum = 0
 				pass
+			self.postNum = int(postNum)
+		except Exception as e:
+			rootLogger.critical(e)
+			pass
+
+	def gangsinComment(self, SESS, userId):
+		try:
+			commentNum = 0
+			try:
+				if self.cmb_gall.currentText() == "전체 갤러리":
+					url = "https://gallog.dcinside.com/%s" % userId
+					req = SESS.get(url)
+					soup = BeautifulSoup(req.text, "lxml")
+					commentNum = soup.find_all("h2", class_="tit")[1].find("span", class_="num").text.replace("(", "").replace(")", "")
+				else:
+					url = "https://gallog.dcinside.com" + self.gallDict[self.cmb_gall.currentText()][1].replace("type", "comment").replace("location.href='", "")[:-1]
+					req = SESS.get(url)
+					soup = BeautifulSoup(req.text, "lxml")
+					commentNum = soup.find_all("h2", class_="tit")[0].find("span", class_="num").text.replace("(", "").replace(")", "")
+			except IndexError:
+				commentNum = 0
+				pass
+			self.commentNum = int(commentNum)
+		except Exception as e:
+			rootLogger.critical(e)
+			pass
+
+	def gangsinEtc(self, SESS, userId):
+		try:
+			etcList = []
+			url = "https://gallog.dcinside.com/%s" % userId
+			req = SESS.get(url)
+			soup = BeautifulSoup(req.text, "lxml")
+			etcList.append(soup.find("div", class_="galler_info").text.split("(")[0].replace("\n", ""))
+			etcList.append(int(soup.find_all("h2", class_="tit")[2].find("span", class_="num").text.replace("(", "").replace(")", "")))
+			etcList.append(int(soup.find_all("h2", class_="tit")[3].find("span", class_="num").text.replace("(", "").replace(")", "")))
+			self.etcList = etcList
+		except Exception as e:
+			rootLogger.critical(e)
+			pass
 
 	def get_service_code(self, userId, purpose):
 		req = SESS.get("https://gallog.dcinside.com/%s/%s" % (userId, purpose))
-		soup = BeautifulSoup(req.text,"lxml")
+		soup = BeautifulSoup(req.text, "lxml")
 		service_code_origin = soup.find("input", {"name" : "service_code"})["value"]
 		data  = soup.select("script")[29]
 
@@ -601,27 +762,41 @@ class MyWidget(QWidget):
 			rootLogger.warning("Can't delete comment without login")
 			QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
 
+class ImageViewer(QMainWindow):
+	def __init__(self, parent=None):
+		super(ImageViewer, self).__init__(parent)
+		self.setFixedSize(700, 442)
+		self.setWindowTitle("귀여운 웰시코기")
+		self.lbl = QLabel(self)
+		self.lbl.resize(700, 442)
+		image = QPixmap(resourcePath("dependencies/image/corgi.jpg"))
+		self.lbl.setPixmap(QPixmap(image))
+		self.show()
+
 class DCleanerGUI(QMainWindow):
 	def __init__(self):
 		super().__init__()
 		wg = MyWidget()
 		self.setCentralWidget(wg)
 
-		infoMenu = QAction(QIcon("./dependencies/image/question.ico"), "&Info", self)
+		infoMenu = QAction(QIcon(resourcePath("dependencies/image/question.ico")), "&Info", self)
 		rootLogger.info("Question icon loaded successfully")
 		infoMenu.setShortcut("Ctrl+I")
 		infoMenu.triggered.connect(self.showProgInfo)
 		infoMenu.setStatusTip("프로그램 정보 표시")
-		updateMenu = QAction(QIcon("./dependencies/image/update.ico"), "&Update", self)
+		updateMenu = QAction(QIcon(resourcePath("dependencies/image/update.ico")), "&Update", self)
 		rootLogger.info("Update icon loaded successfully")
 		updateMenu.setShortcut("Ctrl+T")
 		updateMenu.setStatusTip("업데이트 확인")
 		updateMenu.triggered.connect(checkUpdate)
-		exitMenu = QAction(QIcon("./dependencies/image/shutdown.ico"), "&Exit", self)
+		exitMenu = QAction(QIcon(resourcePath("dependencies/image/shutdown.ico")), "&Exit", self)
 		rootLogger.info("Exit icon loaded successfully")
 		exitMenu.setShortcut("Ctrl+Q")
 		exitMenu.setStatusTip("프로그램 종료")
 		exitMenu.triggered.connect(self.closeEventForShortcut)
+		corgiMenu = QAction(QIcon(resourcePath("dependencies/image/star.ico")), "&Corgi", self)
+		corgiMenu.triggered.connect(self.showCorgiImage)
+		corgiMenu.setStatusTip("귀여운 웰시코기 보기")
 
 		self.statusBar()
 
@@ -630,18 +805,19 @@ class DCleanerGUI(QMainWindow):
 		fileMenu.addAction(infoMenu)
 		fileMenu.addAction(updateMenu)
 		fileMenu.addAction(exitMenu)
+		fileMenu.addAction(corgiMenu)
 
 		self.setWindowTitle("ThanosCleaner")
-		self.setWindowIcon(QIcon("./dependencies/image/Thanos.ico"))
+		self.setWindowIcon(QIcon(resourcePath("dependencies/image/Thanos.ico")))
 		if sys.platform == "darwin" or sys.platform == "linux":
 			scalingSize = self.logicalDpiX() / 72.0
 			rootLogger.info("Set DPI Scaling to %f" % scalingSize)
-			self.setFixedSize(300 * scalingSize, 400 * scalingSize)
+			self.setFixedSize(300 * scalingSize, 450 * scalingSize)
 			self.setStyleSheet("font-size: %dpx;" % (12 * scalingSize))
 		else:
 			scalingSize = self.logicalDpiX() / 96.0
 			rootLogger.info("Set DPI Scaling to %f" % scalingSize)
-			self.setFixedSize(300 * scalingSize, 400 * scalingSize)
+			self.setFixedSize(300 * scalingSize, 450 * scalingSize)
 			self.setStyleSheet("font-size: %dpx;" % (12 * scalingSize))
 		
 		global updateFlag
@@ -673,6 +849,16 @@ class DCleanerGUI(QMainWindow):
 		else:
 			rootLogger.info("Program terminate has canceled")
 			pass
+	
+	def showCorgiImage(self):
+		self.dialog = ImageViewer(self)
+
+def resourcePath(relativePath):
+	try:
+		basePath = sys._MEIPASS
+	except Exception:
+		basePath = os.path.abspath(".")
+	return os.path.join(basePath, relativePath)
 
 def isUserAdmin():
 	try:
