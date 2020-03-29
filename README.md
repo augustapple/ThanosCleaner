@@ -1,3 +1,5 @@
+# [**다운로드**](https://github.com/augustapple/ThanosCleaner/releases/tag/v3.0.0)
+
 # 디시 패치 관련 공지
 
 현재 디시인사이드 측의 reCAPTCHA 패치로 아래 삭제 서비스는 슬로우 모드를 활성화해야 이용 가능합니다.
