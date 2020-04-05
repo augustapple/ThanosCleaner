@@ -1,4 +1,4 @@
-# [**다운로드**](https://github.com/augustapple/ThanosCleaner/releases/download/v3.0.0/ThanosCleaner.zip)
+# [**최신 버전 다운로드**](https://github.com/augustapple/ThanosCleaner/releases/latest/download/ThanosCleaner.zip)
 
 # 바이러스 관련 공지
 [관련 이슈](https://github.com/augustapple/ThanosCleaner/issues/17)
