@@ -1,5 +1,16 @@
 # [**다운로드**](https://github.com/augustapple/ThanosCleaner/releases/download/v3.0.0/ThanosCleaner.zip)
 
+# 바이러스 관련 공지
+[관련 이슈](https://github.com/augustapple/ThanosCleaner/issues/17)
+
+[관련 SO 질문글](https://stackoverflow.com/questions/43777106/program-made-with-pyinstaller-now-seen-as-a-trojan-horse-by-avg)
+
+ThanosCleaner를 배포하기 위해 사용하는 pyinstaller의 특성 때문에 (미리 컴파일된 bootloader를 사용함) 바이러스로
+오진한 것 같습니다.
+
+현재 배포되고 있는 3.0.1 버전은 직접 컴파일한 bootloader를 이용한 pyinstaller로 빌드되었습니다. 기존의 3.0.0 버전을 사용하시던 분들 중
+만약 바이러스로 분류되어 사용하지 못하신 분들은 3.0.1 버전으로 업데이트 해주시기 바랍니다.
+
 # 디시 패치 관련 공지
 
 현재 디시인사이드 측의 reCAPTCHA 패치로 아래 삭제 서비스는 슬로우 모드를 활성화해야 이용 가능합니다.
