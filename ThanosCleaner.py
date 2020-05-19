@@ -23,7 +23,7 @@ exitFlag = False
 deleteFlag = False
 updateFlag = False
 sleepTime = 0.33
-CUR_VERSION = "3.0.0"
+CUR_VERSION = "3.0.1"
 LATEST_VERSION = requests.get(url="https://github.com/augustapple/ThanosCleaner/raw/master/version.json").json()['version']
 
 decode_service_code='''
