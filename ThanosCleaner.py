@@ -23,7 +23,7 @@ exitFlag = False
 deleteFlag = False
 updateFlag = False
 sleepTime = 0.33
-CUR_VERSION = "3.0.1"
+CUR_VERSION = "3.0.2"
 LATEST_VERSION = requests.get(url="https://github.com/augustapple/ThanosCleaner/raw/master/version.json").json()['version']
 
 decode_service_code='''
@@ -132,10 +132,17 @@ def startUpdate():
 		rootLogger.critical(e)
 		pass
 
+class SignalClass(QObject):
+	msgSignal = pyqtSignal(str, str)
+
 class MyWidget(QWidget):
 	def __init__(self):
 		super().__init__()
 		try:
+			self.sc = SignalClass()
+			self.sc.msgSignal.connect(self.showMessage)
+			self.messageResponse = None
+
 			rootLogger.debug("Application started")
 
 			layout = QVBoxLayout()
@@ -231,6 +238,21 @@ class MyWidget(QWidget):
 		except Exception as e:
 			rootLogger.critical(e)
 			pass
+	
+	@pyqtSlot(str, str)
+	def showMessage(self, msgType, content):
+		if msgType == "warning":
+			msg = QMessageBox.warning(self, "경고", content, QMessageBox.Yes)
+			if msg == QMessageBox.Yes:
+				self.messageResponse = QMessageBox.Yes
+		elif msgType == "question":
+			msg = QMessageBox.question(self, "물음", content, QMessageBox.Yes | QMessageBox.No)
+			if msg == QMessageBox.Yes:
+				self.messageResponse = QMessageBox.Yes
+			else:
+				self.messageResponse = QMessageBox.No
+		elif msgType == "information":
+			msg = QMessageBox.information(self, "정보", content)
 
 
 	def hidePassword(self, state):
@@ -256,8 +278,8 @@ class MyWidget(QWidget):
 		global SESS, loginFlag, deleteFlag
 		if deleteFlag:
 			rootLogger.debug("Logout event detected while delete process")
-			logoutCheck = QMessageBox.warning(self, "경고", "삭제가 진행중입니다. 로그아웃 하시겠습니까?", QMessageBox.Yes | QMessageBox.No)
-			if logoutCheck == QMessageBox.Yes:
+			self.sc.msgSignal.emit("warning", "삭제가 진행중입니다. 로그아웃 하시겠습니까?")
+			if self.messageResponse == QMessageBox.Yes:
 				loginFlag = False
 				SESS.close()
 				self.btn_login.setEnabled(True)
@@ -292,12 +314,13 @@ class MyWidget(QWidget):
 		self.userPw = self.qle_pw.text()
 
 		if(self.userId == "" or self.userPw == ""):
-			QMessageBox.warning(self, "경고", "아이디, 비밀번호를 입력해주세요", QMessageBox.Yes)
+			self.sc.msgSignal.emit("warning", "아이디, 비밀번호를 입력해주세요")
+
 			rootLogger.warning("ID or password cannot be blank!")
 		else:
 			loginSess = self.login(self.userId, self.userPw)
 			if not loginSess:
-				QMessageBox.warning(self, "경고", "로그인에 실패했습니다", QMessageBox.Yes)
+				self.sc.msgSignal.emit("warning", "로그인에 실패했습니다")
 				rootLogger.error("Login failed")
 			else:
 				global loginFlag
@@ -389,7 +412,7 @@ class MyWidget(QWidget):
 				rootLogger.info("Post delete process started")
 			else:
 				rootLogger.warning("Can't delete post without login")
-				QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
+				self.sc.msgSignal.emit("warning", "로그인을 해주세요")
 		except Exception as e:
 			rootLogger.critical(e)
 			pass
@@ -433,6 +456,15 @@ class MyWidget(QWidget):
 					"service_code" : service_code
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
+				if "captcha" in req.text:
+					self.activateWindow()
+					rootLogger.warning("Captcha detected")
+					self.sc.msgSignal.emit("warning", "캡차 감지됨")
+					self.buttonEnable()
+					self.btn_delPost.setText("게시글 삭제")
+					deleteFlag = False
+					break
+
 				rootLogger.debug(req.text)
 				time.sleep(sleepTime)
 			except Exception as e:
@@ -452,7 +484,7 @@ class MyWidget(QWidget):
 				rootLogger.info("Comment delete process started")
 			else:
 				rootLogger.warning("Can't delete comment without login")
-				QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
+				self.sc.msgSignal.emit("warning", "로그인을 해주세요")
 		except Exception as e:
 			rootLogger.critical(e)
 			pass
@@ -496,6 +528,15 @@ class MyWidget(QWidget):
 					"service_code" : service_code
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
+				if "captcha" in req.text:
+					self.activateWindow()
+					rootLogger.warning("Captcha detected")
+					self.sc.msgSignal.emit("warning", "캡차 감지됨")
+					self.buttonEnable()
+					self.btn_delComment.setText("댓글 삭제")
+					deleteFlag = False
+					break
+
 				rootLogger.debug(req.text)
 				time.sleep(sleepTime)
 			except Exception as e:
@@ -515,7 +556,7 @@ class MyWidget(QWidget):
 				rootLogger.info("Scrap delete process started")
 			else:
 				rootLogger.warning("Can't delete scrap without login")
-				QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
+				self.sc.msgSignal.emit("warning", "로그인을 해주세요")
 		except Exception as e:
 			rootLogger.critical(e)
 			pass
@@ -555,6 +596,15 @@ class MyWidget(QWidget):
 					"service_code" : service_code
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
+				if "captcha" in req.text:
+					self.activateWindow()
+					rootLogger.warning("Captcha detected")
+					self.sc.msgSignal.emit("warning", "캡차 감지됨")
+					self.buttonEnable()
+					self.btn_delScrap.setText("스크랩 삭제")
+					deleteFlag = False
+					break
+
 				rootLogger.debug(req.text)
 				time.sleep(sleepTime)
 			except Exception as e:
@@ -575,7 +625,7 @@ class MyWidget(QWidget):
 				rootLogger.info("Guestbook delete process started")
 			else:
 				rootLogger.warning("Can't delete guestbook without login")
-				QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
+				self.sc.msgSignal.emit("warning", "로그인을 해주세요")
 		except Exception as e:
 			rootLogger.critical(e)
 			pass
@@ -614,6 +664,15 @@ class MyWidget(QWidget):
 					"headnum" : dataNo
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/guestbook_ajax/delete" % userId, data=deleteData, timeout=10)
+				if "captcha" in req.text:
+					self.activateWindow()
+					rootLogger.warning("Captcha detected")
+					self.sc.msgSignal.emit("warning", "캡차 감지됨")
+					self.buttonEnable()
+					self.btn_delGuestbook.setText("방명록 삭제")
+					deleteFlag = False
+					break
+
 				rootLogger.debug(req.text)
 				time.sleep(sleepTime)
 			except Exception as e:
@@ -703,7 +762,7 @@ class MyWidget(QWidget):
 			url = "https://gallog.dcinside.com/%s" % userId
 			req = SESS.get(url)
 			soup = BeautifulSoup(req.text, "lxml")
-			etcList.append(soup.find("div", class_="galler_info").text.split("(")[0].replace("\n", ""))
+			etcList.append(soup.find("div", class_="galler_info").text.split(" ")[0].replace("\n", ""))
 			etcList.append(int(soup.find_all("h2", class_="tit")[2].find("span", class_="num").text.replace("(", "").replace(")", "").replace(",", "")))
 			etcList.append(int(soup.find_all("h2", class_="tit")[3].find("span", class_="num").text.replace("(", "").replace(")", "").replace(",", "")))
 			self.etcList = etcList
@@ -753,14 +812,10 @@ class MyWidget(QWidget):
 		rootLogger.info("All buttons are enabled except cancelDelProcess")
 
 	def cancelDelProcess(self):
-		if (loginFlag):
-			global deleteFlag
-			deleteFlag = False
-			self.buttonEnable()
-			rootLogger.info("Delete process has stopped by user's request")
-		else:
-			rootLogger.warning("Can't delete comment without login")
-			QMessageBox.warning(self, "경고", "로그인을 해주세요", QMessageBox.Yes)
+		global deleteFlag
+		deleteFlag = False
+		self.buttonEnable()
+		rootLogger.info("Delete process has stopped by user's request")
 
 class ImageViewer(QMainWindow):
 	def __init__(self, parent=None):
@@ -861,13 +916,14 @@ def resourcePath(relativePath):
 	return os.path.join(basePath, relativePath)
 
 def isUserAdmin():
-	try:
+	return True
+	"""try:
 		if os.name == 'nt':
 			return ctypes.windll.shell32.IsUserAnAdmin()
 		else:
 			return True
 	except:
-		return False
+		return False"""
 
 if isUserAdmin():
 	if __name__ == "__main__":
