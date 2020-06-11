@@ -916,14 +916,13 @@ def resourcePath(relativePath):
 	return os.path.join(basePath, relativePath)
 
 def isUserAdmin():
-	return True
-	"""try:
+	try:
 		if os.name == 'nt':
 			return ctypes.windll.shell32.IsUserAnAdmin()
 		else:
 			return True
 	except:
-		return False"""
+		return False
 
 if isUserAdmin():
 	if __name__ == "__main__":
