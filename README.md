@@ -20,12 +20,8 @@ ThanosCleaner를 배포하기 위해 사용하는 pyinstaller의 특성 때문�
 
 활성화 후 이용 중 삭제가 더 이상 진행되지 않는다면 갤로그에 수동으로 로그인하신 후 reCAPTCHA 과정을 거쳐 글, 댓글 중 하나를 삭제하셔야 합니다.
 
-## 최근 업데이트 (3.0.0)
-UI 배치 개편
-
-최신순 삭제, 오래된순 삭제, 갤러리별 삭제 기능 추가
-
-**기여운 코기를 볼 수 있는 메뉴 추가 (중요)**
+## 최근 업데이트 (3.0.2)
+캡차가 걸린 후 삭제 기능을 자동으로 멈춤 (갤로그 밴 방지)
 
 ## ThanosCleaner란?
 한 번의 핑거 스냅으로 우주의 절반을 소멸시킨 타노스를 본받아 한 번의 클릭으로
@@ -62,8 +58,6 @@ pyinstaller -F -w --icon="dependencies/image/Thanos.ico" ThanosCleaner.py
 ## Special Thanks
 
 베타버전을 테스트해준 ㄴㅁㅈㄱ, 대리영정, 플링츄, 배교자 님
-
-제작하신 클리너의 코드 비상업적 사용을 허가해주신 [logs3](https://github.com/logs3) 님
 
 이슈를 제보해주신 [craftingmod](https://github.com/craftingmod) 님
 
