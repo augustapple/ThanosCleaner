@@ -1,6 +1,7 @@
-beautifulsoup4==4.8.1
-Js2Py==0.66
-lxml==4.4.1
 PyQt5==5.13.1
-requests==2.22.0
 packaging==19.2
+pyquery==1.4.1
+lxml==4.4.1
+Js2Py==0.66
+requests==2.22.0
+beautifulsoup4==4.8.1
