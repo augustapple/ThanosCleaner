@@ -2,9 +2,11 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from packaging import version
+from pyquery import PyQuery
 import os
 import re
 import sys
+import lxml
 import time
 import math
 import js2py
@@ -12,7 +14,6 @@ import ctypes
 import zipfile
 import requests
 import threading
-import webbrowser
 import subprocess
 import logging
 import logging.handlers
@@ -23,7 +24,7 @@ exitFlag = False
 deleteFlag = False
 updateFlag = False
 sleepTime = 0.33
-CUR_VERSION = "3.0.2"
+CUR_VERSION = "3.0.3"
 LATEST_VERSION = requests.get(url="https://github.com/augustapple/ThanosCleaner/raw/master/version.json").json()['version']
 
 decode_service_code='''
@@ -98,7 +99,7 @@ def checkUpdate():
 				msg.exec_()
 
 	except Exception as e:
-		rootLogger.critical(e)
+		rootLogger.critical(e, exc_info=True)
 		pass
 
 def startUpdate():
@@ -129,7 +130,7 @@ def startUpdate():
 		QCoreApplication.instance().quit()
 
 	except Exception as e:
-		rootLogger.critical(e)
+		rootLogger.critical(e, exc_info=True)
 		pass
 
 class SignalClass(QObject):
@@ -161,6 +162,7 @@ class MyWidget(QWidget):
 			self.cbx_pw.toggle()
 			self.cbx_sm = QCheckBox("슬로우 모드", self)
 			self.cbx_sm.stateChanged.connect(self.slowMode)
+			self.cbx_sm.toggle()
 			self.btn_login = QPushButton("로그인", self)
 			self.btn_login.clicked.connect(self.tryLogin)
 			self.btn_login.setStatusTip("로그인하기")
@@ -236,7 +238,7 @@ class MyWidget(QWidget):
 			rootLogger.debug("Application initialized successfully")
 			checkUpdate()
 		except Exception as e:
-			rootLogger.critical(e)
+			rootLogger.critical(e, exc_info=True)
 			pass
 	
 	@pyqtSlot(str, str)
@@ -253,7 +255,6 @@ class MyWidget(QWidget):
 				self.messageResponse = QMessageBox.No
 		elif msgType == "information":
 			msg = QMessageBox.information(self, "정보", content)
-
 
 	def hidePassword(self, state):
 		if state == Qt.Checked:
@@ -321,7 +322,7 @@ class MyWidget(QWidget):
 			loginSess = self.login(self.userId, self.userPw)
 			if not loginSess:
 				self.sc.msgSignal.emit("warning", "로그인에 실패했습니다")
-				rootLogger.error("Login failed")
+				rootLogger.error("Login failed", exc_info=True)
 			else:
 				global loginFlag
 				loginFlag = True
@@ -367,7 +368,7 @@ class MyWidget(QWidget):
 		}
 
 		if "history.back(-1);" in req.text:
-			rootLogger.error("Cannot create login session!")
+			rootLogger.error("Cannot create login session!", exc_info=True)
 			return 0
 		else:
 			rootLogger.info("Login session created successfully")
@@ -396,7 +397,7 @@ class MyWidget(QWidget):
 				self.cmb_gall.addItem("%s" % i)
 			self.cmb_gall.setEnabled(True)
 		except Exception as e:
-			rootLogger.critical(e)
+			rootLogger.critical(e, exc_info=True)
 			pass
 
 	def tryDelPost(self):
@@ -414,7 +415,7 @@ class MyWidget(QWidget):
 				rootLogger.warning("Can't delete post without login")
 				self.sc.msgSignal.emit("warning", "로그인을 해주세요")
 		except Exception as e:
-			rootLogger.critical(e)
+			rootLogger.critical(e, exc_info=True)
 			pass
 
 	def delPost(self, SESS, userId, service_code):
@@ -457,9 +458,9 @@ class MyWidget(QWidget):
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
 				if "captcha" in req.text:
-					self.activateWindow()
+					self.setWindowState((self.windowState() & Qt.WindowMinimized) | Qt.WindowActive)
 					rootLogger.warning("Captcha detected")
-					self.sc.msgSignal.emit("warning", "캡차 감지됨")
+					self.sc.msgSignal.emit("warning", "캡차가 감지되었습니다<br><a href='https://gallog.dcinside.com/%s'>갤로그</a>로 가서 수동으로 글이나 댓글을 하나 삭제해주세요" % self.userId)
 					self.buttonEnable()
 					self.btn_delPost.setText("게시글 삭제")
 					deleteFlag = False
@@ -468,7 +469,7 @@ class MyWidget(QWidget):
 				rootLogger.debug(req.text)
 				time.sleep(sleepTime)
 			except Exception as e:
-				rootLogger.critical(e)
+				rootLogger.critical(e, exc_info=True)
 				pass
 
 	def tryDelComment(self):
@@ -486,7 +487,7 @@ class MyWidget(QWidget):
 				rootLogger.warning("Can't delete comment without login")
 				self.sc.msgSignal.emit("warning", "로그인을 해주세요")
 		except Exception as e:
-			rootLogger.critical(e)
+			rootLogger.critical(e, exc_info=True)
 			pass
 
 	def delComment(self, SESS, userId, service_code):
@@ -529,9 +530,9 @@ class MyWidget(QWidget):
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
 				if "captcha" in req.text:
-					self.activateWindow()
+					self.setWindowState((self.windowState() & Qt.WindowMinimized) | Qt.WindowActive)
 					rootLogger.warning("Captcha detected")
-					self.sc.msgSignal.emit("warning", "캡차 감지됨")
+					self.sc.msgSignal.emit("warning", "캡차가 감지되었습니다<br><a href='https://gallog.dcinside.com/%s'>갤로그</a>로 가서 수동으로 글이나 댓글을 하나 삭제해주세요" % self.userId)
 					self.buttonEnable()
 					self.btn_delComment.setText("댓글 삭제")
 					deleteFlag = False
@@ -540,7 +541,7 @@ class MyWidget(QWidget):
 				rootLogger.debug(req.text)
 				time.sleep(sleepTime)
 			except Exception as e:
-				rootLogger.critical(e)
+				rootLogger.critical(e, exc_info=True)
 				pass
 
 	def tryDelScrap(self):
@@ -558,7 +559,7 @@ class MyWidget(QWidget):
 				rootLogger.warning("Can't delete scrap without login")
 				self.sc.msgSignal.emit("warning", "로그인을 해주세요")
 		except Exception as e:
-			rootLogger.critical(e)
+			rootLogger.critical(e, exc_info=True)
 			pass
 
 	def delScrap(self, SESS, userId, service_code):
@@ -597,9 +598,9 @@ class MyWidget(QWidget):
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/log_list_ajax/delete" % userId, data=deleteData, timeout=10)
 				if "captcha" in req.text:
-					self.activateWindow()
+					self.setWindowState((self.windowState() & Qt.WindowMinimized) | Qt.WindowActive)
 					rootLogger.warning("Captcha detected")
-					self.sc.msgSignal.emit("warning", "캡차 감지됨")
+					self.sc.msgSignal.emit("warning", "캡차가 감지되었습니다<br><a href='https://gallog.dcinside.com/%s'>갤로그</a>로 가서 수동으로 글이나 댓글을 하나 삭제해주세요" % self.userId)
 					self.buttonEnable()
 					self.btn_delScrap.setText("스크랩 삭제")
 					deleteFlag = False
@@ -608,7 +609,7 @@ class MyWidget(QWidget):
 				rootLogger.debug(req.text)
 				time.sleep(sleepTime)
 			except Exception as e:
-				rootLogger.critical(e)
+				rootLogger.critical(e, exc_info=True)
 				pass
 
 	def tryDelGuestbook(self):
@@ -627,7 +628,7 @@ class MyWidget(QWidget):
 				rootLogger.warning("Can't delete guestbook without login")
 				self.sc.msgSignal.emit("warning", "로그인을 해주세요")
 		except Exception as e:
-			rootLogger.critical(e)
+			rootLogger.critical(e, exc_info=True)
 			pass
 
 	def delGuestbook(self, SESS, userId):
@@ -665,9 +666,9 @@ class MyWidget(QWidget):
 				}
 				req = SESS.post("https://gallog.dcinside.com/%s/ajax/guestbook_ajax/delete" % userId, data=deleteData, timeout=10)
 				if "captcha" in req.text:
-					self.activateWindow()
+					self.setWindowState((self.windowState() & Qt.WindowMinimized) | Qt.WindowActive)
 					rootLogger.warning("Captcha detected")
-					self.sc.msgSignal.emit("warning", "캡차 감지됨")
+					self.sc.msgSignal.emit("warning", "캡차가 감지되었습니다<br><a href='https://gallog.dcinside.com/%s'>갤로그</a>로 가서 수동으로 글이나 댓글을 하나 삭제해주세요" % self.userId)
 					self.buttonEnable()
 					self.btn_delGuestbook.setText("방명록 삭제")
 					deleteFlag = False
@@ -676,16 +677,13 @@ class MyWidget(QWidget):
 				rootLogger.debug(req.text)
 				time.sleep(sleepTime)
 			except Exception as e:
-				rootLogger.critical(e)
+				rootLogger.critical(e, exc_info=True)
 				pass
 
 	def gangsin(self, SESS, userId):
 		rootLogger.debug("Refreshing gallog activities..")
 		global exitFlag, loginFlag
 		try:
-			self.postNum = 0
-			self.commentNum = 0
-			self.etcList = []
 			while exitFlag == False and loginFlag == True:
 				self.gangsinPostThr = (threading.Thread(target=self.gangsinPost, args=(SESS, userId)))
 				self.gangsinPostThr.start()
@@ -697,8 +695,8 @@ class MyWidget(QWidget):
 				self.gangsinCommentThr.join()
 				self.gangsinEtcThr.join()
 				self.lbl_status.setText("로그인 상태 : %s" % self.etcList[0])
-				self.lbl_post.setText("게시글 수 : %d" % self.postNum)
-				self.lbl_comment.setText("댓글 수 : %d" % self.commentNum)
+				self.lbl_post.setText("게시글 수 : %s" % self.postNum)
+				self.lbl_comment.setText("댓글 수 : %s" % self.commentNum)
 				self.lbl_scrap.setText("스크랩 수 : %d" % self.etcList[1])
 				self.lbl_guestbook.setText("방명록 수 : %d" % self.etcList[2])
 				time.sleep(0.3)
@@ -709,52 +707,49 @@ class MyWidget(QWidget):
 					self.lbl_scrap.setText("스크랩 수 : 알 수 없음")
 					self.lbl_guestbook.setText("방명록 수 : 알 수 없음")
 		except Exception as e:
-			rootLogger.critical(e)
+			rootLogger.critical(e, exc_info=True)
 			pass
 
 	def gangsinPost(self, SESS, userId):
 		try:
+			if self.cmb_gall.currentText() == "전체 갤러리":
+				url = "https://gallog.dcinside.com/%s" % userId
+			else:
+				url = "https://gallog.dcinside.com" + self.gallDict[self.cmb_gall.currentText()][1].replace("type", "posting").replace("location.href='", "")[:-1]
+			req = SESS.get(url)
+			soup = BeautifulSoup(req.text, "lxml")
+			postNum = re.sub("\D", "", soup.find_all("h2", class_="tit")[0].find("span", class_="num").text)
+		except IndexError:
 			postNum = 0
-			try:
-				if self.cmb_gall.currentText() == "전체 갤러리":
-					url = "https://gallog.dcinside.com/%s" % userId
-					req = SESS.get(url)
-					soup = BeautifulSoup(req.text, "lxml")
-					postNum = soup.find_all("h2", class_="tit")[0].find("span", class_="num").text.replace("(", "").replace(")", "")
-				else:
-					url = "https://gallog.dcinside.com" + self.gallDict[self.cmb_gall.currentText()][1].replace("type", "posting").replace("location.href='", "")[:-1]
-					req = SESS.get(url)
-					soup = BeautifulSoup(req.text, "lxml")
-					postNum = soup.find_all("h2", class_="tit")[0].find("span", class_="num").text.replace("(", "").replace(")", "")
-			except IndexError:
-				postNum = 0
-				pass
-			self.postNum = int(postNum.replace(",", ""))
-		except Exception as e:
-			rootLogger.critical(e)
 			pass
+		except Exception as e:
+			postNum = "알 수 없음"
+			rootLogger.critical(e, exc_info=True)
+			pass
+		finally:
+			self.postNum = postNum
 
 	def gangsinComment(self, SESS, userId):
 		try:
+			if self.cmb_gall.currentText() == "전체 갤러리":
+				url = "https://gallog.dcinside.com/%s" % userId
+				req = SESS.get(url)
+				soup = BeautifulSoup(req.text, "lxml")
+				commentNum = re.sub("\D", "", soup.find_all("h2", class_="tit")[1].find("span", class_="num").text)
+			else:
+				url = "https://gallog.dcinside.com" + self.gallDict[self.cmb_gall.currentText()][1].replace("type", "comment").replace("location.href='", "")[:-1]
+				req = SESS.get(url)
+				soup = BeautifulSoup(req.text, "lxml")
+				commentNum = re.sub("\D", "", soup.find_all("h2", class_="tit")[0].find("span", class_="num").text)
+		except IndexError:
 			commentNum = 0
-			try:
-				if self.cmb_gall.currentText() == "전체 갤러리":
-					url = "https://gallog.dcinside.com/%s" % userId
-					req = SESS.get(url)
-					soup = BeautifulSoup(req.text, "lxml")
-					commentNum = soup.find_all("h2", class_="tit")[1].find("span", class_="num").text.replace("(", "").replace(")", "")
-				else:
-					url = "https://gallog.dcinside.com" + self.gallDict[self.cmb_gall.currentText()][1].replace("type", "comment").replace("location.href='", "")[:-1]
-					req = SESS.get(url)
-					soup = BeautifulSoup(req.text, "lxml")
-					commentNum = soup.find_all("h2", class_="tit")[0].find("span", class_="num").text.replace("(", "").replace(")", "")
-			except IndexError:
-				commentNum = 0
-				pass
-			self.commentNum = int(commentNum.replace(",", ""))
-		except Exception as e:
-			rootLogger.critical(e)
 			pass
+		except Exception as e:
+			commentNum = "알 수 없음"
+			rootLogger.critical(e, exc_info=True)
+			pass
+		finally:
+			self.commentNum = commentNum
 
 	def gangsinEtc(self, SESS, userId):
 		try:
@@ -763,29 +758,18 @@ class MyWidget(QWidget):
 			req = SESS.get(url)
 			soup = BeautifulSoup(req.text, "lxml")
 			etcList.append(soup.find("div", class_="galler_info").text.split(" ")[0].replace("\n", ""))
-			etcList.append(int(soup.find_all("h2", class_="tit")[2].find("span", class_="num").text.replace("(", "").replace(")", "").replace(",", "")))
-			etcList.append(int(soup.find_all("h2", class_="tit")[3].find("span", class_="num").text.replace("(", "").replace(")", "").replace(",", "")))
+			etcList.append(int(re.sub("\D", "", soup.find_all("h2", class_="tit")[2].find("span", class_="num").text)))
+			etcList.append(int(re.sub("\D", "", soup.find_all("h2", class_="tit")[3].find("span", class_="num").text)))
 			self.etcList = etcList
 		except Exception as e:
-			rootLogger.critical(e)
+			rootLogger.critical(e, exc_info=True)
 			pass
 
 	def get_service_code(self, userId, purpose):
 		req = SESS.get("https://gallog.dcinside.com/%s/%s" % (userId, purpose))
-		soup = BeautifulSoup(req.text, "lxml")
-		service_code_origin = soup.find("input", {"name" : "service_code"})["value"]
-		data  = soup.select("script")[29]
-
-		cut_1 = "var _r = _d"
-		cut_2 = '<script type="text/javascript">'
-		cut_3 = "</script>"
-
-		cut_data = str(data).replace(cut_1,"")
-		cut_data = str(cut_data).replace(cut_2,"")
-		cut_data = str(cut_data).replace(cut_3,"")
-		_r = re.sub("\n","",str(cut_data))
-		r_value = re.sub("['();]","",str(_r))
-		r_value = str(r_value)
+		pq = PyQuery(req.content)
+		r_value = re.sub("['();]", "", pq("#container>article>.conent_wrap>section>script").text().split("var _r = _d")[1])
+		service_code_origin = pq("#container>article>.conent_wrap>section>.gallog_cont>input").attr("value")
 
 		global service_code
 		service_code = decode_service_code(service_code_origin, r_value)
@@ -878,6 +862,7 @@ class DCleanerGUI(QMainWindow):
 		global updateFlag
 		if not updateFlag:
 			self.show()
+			wg.qle_id.setFocus()
 
 	def showProgInfo(self):
 		infoBox = QMessageBox()
