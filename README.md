@@ -1,32 +1,9 @@
-# [**최신 버전 다운로드**](https://github.com/augustapple/ThanosCleaner/releases/latest/download/ThanosCleaner.zip)
+# 버전 안내
+[최신 버전 다운로드](https://github.com/augustapple/ThanosCleaner/releases/latest/download/ThanosCleaner.zip)
 
-# 바이러스 관련 공지
-[관련 이슈](https://github.com/augustapple/ThanosCleaner/issues/17)
+[이전 버전 목록](https://github.com/augustapple/ThanosCleaner/releases)
 
-[관련 SO 질문글](https://stackoverflow.com/questions/43777106/program-made-with-pyinstaller-now-seen-as-a-trojan-horse-by-avg)
-
-ThanosCleaner를 배포하기 위해 사용하는 pyinstaller의 특성 때문에 (미리 컴파일된 bootloader를 사용함) 바이러스로
-오진한 것 같습니다.
-
-현재 배포되고 있는 3.0.1 이상 버전은 직접 컴파일한 bootloader를 이용한 pyinstaller로 빌드되었습니다. 기존의 3.0.0 이하 버전을 사용하시던 분들 중
-만약 바이러스로 분류되어 사용하지 못하신 분들은 3.0.1 이상 버전으로 업데이트 해주시기 바랍니다.
-
-# 디시 캡차 패치 관련 공지
-
-현재 디시인사이드 측의 reCAPTCHA 패치로 아래 삭제 서비스는 슬로우 모드를 활성화해야 이용 가능합니다.
-
-* 글 삭제
-* 댓글 삭제
-
-활성화 후 이용 중 삭제가 더 이상 진행되지 않는다면 갤로그에 수동으로 로그인하신 후 reCAPTCHA 과정을 거쳐 글, 댓글 중 하나를 삭제하셔야 합니다.
-
-# 개발 안내
-
-학업과 개인 사정으로 인해, 그리고 더이상 디시를 하지 않기 때문에 개발이 늦어질 수 있습니다.
-
-그렇지만 보내주시는 건의 메일이나 질문들은 최대한 답변해드리고 있으니 궁금한 사항이 있으시면 언제든 메일 바랍니다.
-
-## 최근 업데이트 (3.0.3)
+최근 업데이트 (3.0.3)
 
 +) 서비스 코드 생성 (로그인) 과정에 있던 버그 수정.
 
@@ -35,6 +12,21 @@ ThanosCleaner를 배포하기 위해 사용하는 pyinstaller의 특성 때문�
 +) 게시글 댓글 표시에 있던 버그 수정.
 
 +) 슬로우 모드가 프로그램 실행 시 기본적으로 활성화 됨.
+
+# 디시 캡차 패치 관련 공지
+
+현재 디시인사이드 측의 reCAPTCHA 패치로 아래 삭제 서비스는 슬로우 모드를 활성화해야 이용 가능합니다.
+
+* 글 삭제
+* 댓글 삭제
+
+슬로우 모드로 이용 중 캡차를 감지했다는 문구가 나오면, 안내창을 따라 갤로그에 방문하여 직접 글이나 댓글을 캡차를 해제해 삭제해주시기 바랍니다.
+
+# 개발 안내
+
+학업과 개인 사정으로 인해, 그리고 더이상 디시를 하지 않기 때문에 개발이 늦어질 수 있습니다.
+
+그렇지만 보내주시는 건의 메일이나 질문들은 최대한 답변해드리고 있으니 궁금한 사항이 있으시면 언제든 메일 바랍니다.
 
 ## ThanosCleaner란?
 한 번의 핑거 스냅으로 우주의 절반을 소멸시킨 타노스를 본받아 한 번의 클릭으로
