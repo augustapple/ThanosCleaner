@@ -24,7 +24,7 @@ exitFlag = False
 deleteFlag = False
 updateFlag = False
 sleepTime = 0.33
-CUR_VERSION = "3.0.3"
+CUR_VERSION = "3.0.4"
 LATEST_VERSION = requests.get(url="https://github.com/augustapple/ThanosCleaner/raw/master/version.json").json()['version']
 
 decode_service_code='''
@@ -863,6 +863,8 @@ class DCleanerGUI(QMainWindow):
 		if not updateFlag:
 			self.show()
 			wg.qle_id.setFocus()
+		
+		self.tempUnavailableAlert()
 
 	def showProgInfo(self):
 		infoBox = QMessageBox()
@@ -892,6 +894,9 @@ class DCleanerGUI(QMainWindow):
 	
 	def showCorgiImage(self):
 		self.dialog = ImageViewer(self)
+	
+	def tempUnavailableAlert(self):
+		criticalMsg = QMessageBox.critical(self, "IP 차단 경고", "현재 디시 측에서 클리너 접속 차단 패치를 하여 클리너로 로그인 시<br>IP가 차단되어 디시 접속이 불가능한 이슈가 있습니다.<br>자세한 것은 <a href='https://github.com/augustapple/ThanosCleaner'>여기</a>를 참고해주세요.")
 
 def resourcePath(relativePath):
 	try:
