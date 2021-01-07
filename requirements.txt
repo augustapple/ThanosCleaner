@@ -1,7 +1,7 @@
 PyQt5==5.13.1
 packaging==19.2
 pyquery==1.4.1
-lxml==4.4.1
+lxml==4.6.2
 Js2Py==0.66
 requests==2.22.0
 beautifulsoup4==4.8.1
